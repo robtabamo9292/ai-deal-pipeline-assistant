@@ -1,0 +1,28 @@
+# Virtual environment
+.venv/
+venv/
+
+# Environment variables / secrets
+.env
+.env.local
+.env.*.local
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Streamlit
+.streamlit/secrets.toml
+
+# OS files
+.DS_Store
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary / export files
+*.log
+deal_pipeline_export.csv
