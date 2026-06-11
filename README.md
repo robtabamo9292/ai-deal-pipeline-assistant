@@ -2,7 +2,7 @@
 
 DealFlow AI is an AI-powered private markets deal pipeline assistant that converts unstructured company, founder, and research notes into structured, CRM-ready diligence records.
 
-The project is designed for private markets analysts, venture associates, investor relations teams, and business development teams that need a faster way to organize company information, evaluate opportunities, and generate diligence questions from messy source material.
+The project is designed for teams that need a faster way to organize company information, evaluate opportunities, and generate diligence questions from messy source material.
 
 ## Project Overview
 
