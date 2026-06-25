@@ -104,11 +104,19 @@ def analyze_deal_with_agents(raw_notes: str) -> DealRecord:
     """
     Analyze raw deal notes using the OpenAI Agents SDK, then apply
     the existing deterministic scorecard logic.
+
+    Fallback logic is used only when no API key is available. Runtime
+    failures from the Agents SDK are raised so the UI can surface them
+    instead of showing a successful analysis.
     """
     load_dotenv()
 
     if not os.getenv("OPENAI_API_KEY"):
-        return fallback_deal_record(raw_notes)
+        fallback = fallback_deal_record(raw_notes)
+        fallback.risks.append(
+            "No OPENAI_API_KEY was found, so fallback logic was used instead of Agents SDK analysis."
+        )
+        return fallback
 
     prompt = f"""
     Analyze the following deal notes and produce a structured DealRecord.
@@ -127,6 +135,4 @@ def analyze_deal_with_agents(raw_notes: str) -> DealRecord:
         return apply_vc_scorecard(deal, raw_notes)
 
     except Exception as exc:
-        fallback = fallback_deal_record(raw_notes)
-        fallback.risks.append(f"Agents SDK analysis failed and fallback logic was used: {exc}")
-        return fallback
+        raise RuntimeError(f"Agents SDK analysis failed: {exc}") from exc
