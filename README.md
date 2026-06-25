@@ -37,3 +37,23 @@ The app also includes a diligence scorecard that evaluates opportunities across 
 DealFlow AI is intended as a workflow prototype for sourcing, diligence, and pipeline management. It demonstrates how AI can help private markets and venture teams standardize company information, prioritize opportunities, and prepare more focused diligence workflows.
 
 This project is not investment advice. Outputs should be reviewed by a human and validated against primary sources before being used in an investment process.
+
+
+## OpenAI Agents SDK v2 Upgrade
+
+DealFlow AI now includes an experimental OpenAI Agents SDK workflow.
+
+The original version used a direct OpenAI API call to convert unstructured deal notes into structured diligence records. The v2 workflow adds an agent-based analysis path using the OpenAI Agents SDK.
+
+New capabilities include:
+
+- Agents SDK analysis engine option in the sidebar
+- Dedicated DealFlow Analyst Agent
+- Tool calling through a note-quality assessment tool
+- Structured output using the existing DealRecord schema
+- Reuse of deterministic scorecard logic
+- Fallback behavior when no API key is available
+- Foundation for future multi-agent diligence workflows
+
+This upgrade shows how a standard LLM-powered Streamlit app can evolve into an agentic private-markets workflow.
+
