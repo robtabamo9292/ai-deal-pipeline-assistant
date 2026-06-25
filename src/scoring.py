@@ -333,7 +333,7 @@ def determine_priority(opportunity_score: int, confidence_score: int) -> str:
         return "Medium / High Priority"
 
     if opportunity_score >= 60:
-        return "Needs More Diligence"
+        return "Needs Diligence"
 
     if opportunity_score >= 40:
         return "Low Priority"
