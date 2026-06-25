@@ -162,8 +162,8 @@ def build_due_diligence_scorecard(deal: DealRecord, raw_notes: str) -> List[Dili
                 "outbound", "inbound", "plg", "enterprise sales", "customer acquisition",
                 "self-serve", "sales motion", "go-to-market"
             ],
-            "rationale_high": "The notes include some evidence of a scalable go-to-market motion.",
-            "rationale_low": "The repeatability and scalability of the go-to-market motion need validation.",
+            "rationale_high": "The notes include some evidence of a scalable go-to-market process.",
+            "rationale_low": "The repeatability and scalability of the go-to-market process need validation.",
             "question": "What acquisition channels are working, and can GTM scale beyond founder-led sales?"
         },
         {

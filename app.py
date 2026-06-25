@@ -248,8 +248,124 @@ st.set_page_config(
 inject_custom_css()
 
 
+
+
+def render_deal_result(deal):
+    st.success("Deal analyzed successfully.")
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.metric("Opportunity Score", deal.opportunity_score)
+
+    with col2:
+        st.metric("Priority", deal.priority)
+
+    with col3:
+        st.metric("Confidence Score", deal.confidence_score)
+
+    st.markdown("---")
+
+    st.subheader("Due Diligence Scorecard")
+
+    if deal.diligence_scorecard:
+        scorecard_df = scorecard_to_dataframe(deal.diligence_scorecard)
+        st.dataframe(scorecard_df)
+
+        with st.expander("How this scorecard works"):
+            st.markdown(
+                """
+                The scorecard evaluates the company across diligence categories:
+                founder/team fit, market opportunity, product differentiation, traction/PMF,
+                customer clarity, business model, GTM scalability, competitive positioning,
+                and risk/compliance.
+
+                The opportunity score is calculated from the category scores. The confidence
+                score reflects how much supporting evidence appeared in the notes. Confidence
+                is capped when source links or citations are not provided.
+                """
+            )
+    else:
+        st.info("No scorecard generated.")
+
+    st.markdown("---")
+
+    st.subheader("Structured Deal Record")
+
+    left, right = st.columns([0.60, 0.40])
+
+    with left:
+        st.markdown(f"### {safe_markdown(deal.company_name)}")
+        st.markdown(f"**Sector:** {safe_markdown(deal.sector)}")
+        st.markdown(f"**Subsector:** {safe_markdown(deal.subsector)}")
+        st.markdown(f"**Business Model:** {safe_markdown(deal.business_model)}")
+        st.markdown(f"**Stage:** {safe_markdown(deal.stage)}")
+        st.markdown(f"**Description:** {safe_markdown(deal.description)}")
+        st.markdown(f"**Source Context:** {safe_markdown(deal.relationship_context)}")
+        st.markdown(f"**Recommended Next Step:** {safe_markdown(deal.recommended_next_step)}")
+
+    with right:
+        st.markdown("### CRM Tags")
+        if deal.crm_tags:
+            for tag in deal.crm_tags:
+                st.markdown(f"- {safe_markdown(tag)}")
+        else:
+            st.write("No CRM tags extracted.")
+
+    st.markdown("---")
+
+    col_a, col_b, col_c = st.columns(3)
+
+    with col_a:
+        st.markdown("### Traction Signals")
+        if deal.traction_signals:
+            for item in deal.traction_signals:
+                st.markdown(f"- {safe_markdown(item)}")
+        else:
+            st.write("No traction signals found.")
+
+    with col_b:
+        st.markdown("### Customer Segments")
+        if deal.customer_signals:
+            for item in deal.customer_signals:
+                st.markdown(f"- {safe_markdown(item)}")
+        else:
+            st.write("No customer segments found.")
+
+    with col_c:
+        st.markdown("### Funding Signals")
+        if deal.funding_signals:
+            for item in deal.funding_signals:
+                st.markdown(f"- {safe_markdown(item)}")
+        else:
+            st.write("No funding signals found.")
+
+    st.markdown("---")
+
+    col_risks, col_questions = st.columns(2)
+
+    with col_risks:
+        st.markdown("### Risks")
+        if deal.risks:
+            for risk in deal.risks:
+                st.markdown(f"- {safe_markdown(risk)}")
+        else:
+            st.write("No risks extracted.")
+
+    with col_questions:
+        st.markdown("### Priority Diligence Questions")
+        if deal.diligence_questions:
+            for question in deal.diligence_questions:
+                st.markdown(f"- {safe_markdown(question)}")
+        else:
+            st.write("No diligence questions generated.")
+
 if "deals" not in st.session_state:
     st.session_state.deals = []
+
+if st.session_state.get("clear_custom_notes_after_analysis"):
+    st.session_state.custom_notes_input = ""
+    st.session_state.clear_custom_notes_after_analysis = False
 
 
 st.title("DealFlow AI — AI Deal Pipeline Assistant")
@@ -289,6 +405,20 @@ with st.sidebar:
     )
 
     st.markdown("---")
+
+    if st.button("Start New Analysis"):
+        for key in [
+            "raw_notes",
+            "last_deal",
+            "latest_deal",
+            "deal",
+            "analysis_result",
+            "custom_notes_input",
+            "clear_custom_notes_after_analysis",
+        ]:
+            if key in st.session_state:
+                del st.session_state[key]
+        st.rerun()
 
     if st.button("Clear Pipeline"):
         st.session_state.deals = []
@@ -354,6 +484,7 @@ with tab1:
 
         custom_notes = st.text_area(
             "Paste company notes:",
+            key="custom_notes_input",
             height=350,
             placeholder=(
                 "Paste company description, founder notes, funding context, traction, customers, "
@@ -388,118 +519,17 @@ Company notes:
                     deal = analyze_deal_with_llm(raw_notes)
                 st.session_state.deals.append(deal)
 
-            st.success("Deal analyzed successfully.")
-
-            col1, col2, col3 = st.columns(3)
-
-            with col1:
-                st.metric("Opportunity Score", deal.opportunity_score)
-
-            with col2:
-                st.metric("Priority", deal.priority)
-
-            with col3:
-                st.metric("Confidence Score", deal.confidence_score)
-
-            st.markdown("---")
-
-            st.subheader("Due Diligence Scorecard")
-
-            if deal.diligence_scorecard:
-                scorecard_df = scorecard_to_dataframe(deal.diligence_scorecard)
-                st.dataframe(scorecard_df)
-
-                with st.expander("How this scorecard works"):
-                    st.markdown(
-                        """
-                        The scorecard evaluates the company across diligence categories:
-                        founder/team fit, market opportunity, product differentiation, traction/PMF,
-                        customer clarity, business model, GTM scalability, competitive positioning,
-                        and risk/compliance.
-
-                        The opportunity score is calculated from the category scores. The confidence
-                        score reflects how much supporting evidence appeared in the notes. Confidence
-                        is capped when source links or citations are not provided.
-                        """
-                    )
-            else:
-                st.info("No scorecard generated.")
-
-            st.markdown("---")
-
-            st.subheader("Structured Deal Record")
-
-            left, right = st.columns([0.60, 0.40])
-
-            with left:
-                st.markdown(f"### {safe_markdown(deal.company_name)}")
-                st.markdown(f"**Sector:** {safe_markdown(deal.sector)}")
-                st.markdown(f"**Subsector:** {safe_markdown(deal.subsector)}")
-                st.markdown(f"**Business Model:** {safe_markdown(deal.business_model)}")
-                st.markdown(f"**Stage:** {safe_markdown(deal.stage)}")
-                st.markdown(f"**Description:** {safe_markdown(deal.description)}")
-                st.markdown(f"**Source Context:** {safe_markdown(deal.relationship_context)}")
-                st.markdown(f"**Recommended Next Step:** {safe_markdown(deal.recommended_next_step)}")
-
-            with right:
-                st.markdown("### CRM Tags")
-                if deal.crm_tags:
-                    for tag in deal.crm_tags:
-                        st.markdown(f"- {safe_markdown(tag)}")
-                else:
-                    st.write("No CRM tags extracted.")
-
-            st.markdown("---")
-
-            col_a, col_b, col_c = st.columns(3)
-
-            with col_a:
-                st.markdown("### Traction Signals")
-                if deal.traction_signals:
-                    for item in deal.traction_signals:
-                        st.markdown(f"- {safe_markdown(item)}")
-                else:
-                    st.write("No traction signals found.")
-
-            with col_b:
-                st.markdown("### Customer Segments")
-                if deal.customer_signals:
-                    for item in deal.customer_signals:
-                        st.markdown(f"- {safe_markdown(item)}")
-                else:
-                    st.write("No customer segments found.")
-
-            with col_c:
-                st.markdown("### Funding Signals")
-                if deal.funding_signals:
-                    for item in deal.funding_signals:
-                        st.markdown(f"- {safe_markdown(item)}")
-                else:
-                    st.write("No funding signals found.")
-
-            st.markdown("---")
-
-            col_risks, col_questions = st.columns(2)
-
-            with col_risks:
-                st.markdown("### Risks")
-                if deal.risks:
-                    for risk in deal.risks:
-                        st.markdown(f"- {safe_markdown(risk)}")
-                else:
-                    st.write("No risks extracted.")
-
-            with col_questions:
-                st.markdown("### Priority Diligence Questions")
-                if deal.diligence_questions:
-                    for question in deal.diligence_questions:
-                        st.markdown(f"- {safe_markdown(question)}")
-                else:
-                    st.write("No diligence questions generated.")
+            st.session_state.latest_deal = deal
+            st.session_state.clear_custom_notes_after_analysis = True
+            st.rerun()
 
         except Exception as e:
             st.error(f"Error analyzing deal: {e}")
 
+
+    latest_deal = st.session_state.get("latest_deal")
+    if latest_deal is not None:
+        render_deal_result(latest_deal)
 
 with tab2:
     st.subheader("CRM-Ready Pipeline Table")
