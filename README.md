@@ -1,6 +1,6 @@
 # DealFlow AI — AI Deal Pipeline Assistant
 
-DealFlow AI is an AI-powered private markets deal pipeline assistant that converts unstructured company, founder, and research notes into structured, CRM-ready diligence records.
+AI-powered private markets deal pipeline assistant that converts unstructured company, founder, and research notes into structured, CRM-ready diligence records.
 
 The project is designed for teams that need a faster way to organize company information, evaluate opportunities, and generate diligence questions from messy source material.
 
@@ -36,12 +36,12 @@ The app also includes a diligence scorecard that evaluates opportunities across 
 
 DealFlow AI is intended as a workflow prototype for sourcing, diligence, and pipeline management. It demonstrates how AI can help private markets and venture teams standardize company information, prioritize opportunities, and prepare more focused diligence workflows.
 
-This project is not investment advice. Outputs should be reviewed by a human and validated against primary sources before being used in an investment process.
+NFA
 
 
 ## OpenAI Agents SDK v2 Upgrade
 
-DealFlow AI now includes an experimental OpenAI Agents SDK workflow.
+Included experimental OpenAI Agents SDK workflow.
 
 The original version used a direct OpenAI API call to convert unstructured deal notes into structured diligence records. The v2 workflow adds an agent-based analysis path using the OpenAI Agents SDK.
 
@@ -55,5 +55,4 @@ New capabilities include:
 - Fallback behavior when no API key is available
 - Foundation for future multi-agent diligence workflows
 
-This upgrade shows how a standard LLM-powered Streamlit app can evolve into an agentic private-markets workflow.
 
