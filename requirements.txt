@@ -4,3 +4,4 @@ python-dotenv
 openai
 pydantic
 altair<5
+openai-agents

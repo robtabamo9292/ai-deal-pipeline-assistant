@@ -3,6 +3,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from src.llm import analyze_deal_with_llm
+from src.agent_workflow import analyze_deal_with_agents
 from src.export import create_pipeline_dataframe
 from src.sample_data import REAL_SAMPLE_DEALS
 
@@ -281,6 +282,14 @@ with st.sidebar:
 
     st.markdown("---")
 
+    analysis_engine = st.selectbox(
+        "Analysis Engine",
+        ["OpenAI API v1", "Agents SDK v2"],
+        index=1,
+    )
+
+    st.markdown("---")
+
     if st.button("Clear Pipeline"):
         st.session_state.deals = []
         st.success("Pipeline cleared.")
@@ -373,7 +382,10 @@ Company notes:
 
         try:
             with st.spinner("Analyzing deal notes and generating diligence record..."):
-                deal = analyze_deal_with_llm(raw_notes)
+                if analysis_engine == "Agents SDK v2":
+                    deal = analyze_deal_with_agents(raw_notes)
+                else:
+                    deal = analyze_deal_with_llm(raw_notes)
                 st.session_state.deals.append(deal)
 
             st.success("Deal analyzed successfully.")
