@@ -879,25 +879,19 @@ Treat as an early/growth-stage AI GTM software opportunity. Diligence should con
   })();
 </script>
 
+
+
+
 <script>
-/* INTERACTIVE_UI_V1_PATCH */
+/* INTERACTIVE_UI_V1_SAFE_PATCH */
 
 (function () {
-  function byText(selector, text) {
-    return Array.from(document.querySelectorAll(selector)).find(el =>
-      el.textContent.trim().toLowerCase().includes(text.toLowerCase())
-    );
+  function textIncludes(el, text) {
+    return el && el.textContent && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
   }
 
-  function allByText(selector, text) {
-    return Array.from(document.querySelectorAll(selector)).filter(el =>
-      el.textContent.trim().toLowerCase().includes(text.toLowerCase())
-    );
-  }
-
-  function setActive(elements, activeElement, activeClass = "active") {
-    elements.forEach(el => el.classList.remove(activeClass));
-    if (activeElement) activeElement.classList.add(activeClass);
+  function findButton(text) {
+    return Array.from(document.querySelectorAll("button, .btn, .action-btn")).find(el => textIncludes(el, text));
   }
 
   function showToast(message) {
@@ -912,163 +906,154 @@ Treat as an early/growth-stage AI GTM software opportunity. Diligence should con
       toast.style.zIndex = "9999";
       toast.style.padding = "12px 16px";
       toast.style.borderRadius = "12px";
-      toast.style.background = "rgba(18, 31, 51, 0.96)";
+      toast.style.background = "rgba(18,31,51,0.96)";
       toast.style.border = "1px solid rgba(91,124,250,0.45)";
       toast.style.boxShadow = "0 18px 40px rgba(0,0,0,0.35)";
       toast.style.color = "#e7ecf6";
       toast.style.fontSize = "13px";
       toast.style.fontWeight = "700";
-      toast.style.maxWidth = "360px";
       document.body.appendChild(toast);
     }
 
     toast.textContent = message;
     toast.style.opacity = "1";
 
-    setTimeout(() => {
+    setTimeout(function () {
       toast.style.opacity = "0";
-    }, 2400);
+    }, 2200);
   }
 
   function getNotes() {
-    const area = document.querySelector("textarea");
+    const area = document.querySelector("textarea.notes-area") || document.querySelector("textarea");
     return area ? area.value.trim() : "";
   }
 
   function getCompanyName() {
     const inputs = Array.from(document.querySelectorAll("input"));
-    const companyInput = inputs.find(input => input.value && input.value.trim().length > 0);
-    return companyInput ? companyInput.value.trim() : "Analyzed Company";
+    const namedInput = inputs.find(input => input.value && input.value.trim().length > 0 && input.type !== "radio");
+    return namedInput ? namedInput.value.trim() : "Analyzed Company";
   }
 
-  function updateTextContaining(label, value) {
-    const candidates = Array.from(document.querySelectorAll("div, span, p, td"));
-    const el = candidates.find(node => node.textContent.trim() === label);
-    if (!el) return;
-
-    const row = el.closest("tr") || el.parentElement;
-    if (!row) return;
-
-    const valueNode = Array.from(row.querySelectorAll("td, div, span")).find(node => node !== el && node.textContent.trim() && node.textContent.trim() !== label);
-    if (valueNode) valueNode.textContent = value;
+  function findMetricCard(label) {
+    return Array.from(document.querySelectorAll(".stat, .metric-card, .score-card, .card")).find(card =>
+      card.textContent && card.textContent.includes(label)
+    );
   }
 
-  function updateStatus(text, complete) {
-    const status = byText("button, div, span", "Analysis complete") || byText("button, div, span", "Awaiting analysis");
-    if (status) {
-      status.textContent = complete ? "● Analysis complete" : "● Awaiting analysis";
+  function setMetric(label, value, suffix) {
+    const card = findMetricCard(label);
+    if (!card) return;
+
+    const big = card.querySelector(".big");
+    const mid = card.querySelector(".mid");
+
+    if (big) {
+      big.innerHTML = suffix ? value + "<span>" + suffix + "</span>" : value;
+      return;
+    }
+
+    if (mid) {
+      mid.textContent = value;
     }
   }
 
-  function setResultDemo() {
+  function setThesis(company) {
+    const headings = Array.from(document.querySelectorAll("h3"));
+    const heading = headings.find(h => h.textContent.trim() === "Investment Thesis");
+    if (!heading) return;
+
+    const card = heading.closest(".panel-card") || heading.parentElement;
+    if (!card) return;
+
+    const p = card.querySelector("p");
+    if (!p) return;
+
+    p.textContent =
+      company +
+      " appears to be a potentially interesting private-market opportunity based on the pasted notes. Further diligence should validate revenue quality, customer concentration, growth durability, competitive differentiation, unit economics, and financing context before making an investment decision.";
+  }
+
+  function setStructuredRow(label, value) {
+    const rows = Array.from(document.querySelectorAll(".sr-row, tr"));
+
+    for (const row of rows) {
+      const key = row.querySelector(".sr-k, td:first-child");
+      const val = row.querySelector(".sr-v, td:last-child");
+
+      if (key && val && key.textContent.trim() === label) {
+        val.textContent = value;
+        return;
+      }
+    }
+  }
+
+  function resetResultState() {
+    setMetric("Overall Score", "—", " /100");
+    setMetric("Investment Fit", "—");
+    setMetric("Deal Stage", "—");
+    setMetric("Confidence", "—");
+
+    setStructuredRow("Company Name", "—");
+    setStructuredRow("Category", "—");
+    setStructuredRow("Sub-Category", "—");
+    setStructuredRow("Stage", "—");
+    setStructuredRow("Business Model", "—");
+    setStructuredRow("Traction", "Not specified");
+    setStructuredRow("Key Customers", "Not specified");
+    setStructuredRow("Investors", "Not specified");
+    setStructuredRow("Differentiator", "—");
+    setStructuredRow("Score", "—");
+
+    const headings = Array.from(document.querySelectorAll("h3"));
+    const thesisHeading = headings.find(h => h.textContent.trim() === "Investment Thesis");
+    if (thesisHeading) {
+      const card = thesisHeading.closest(".panel-card") || thesisHeading.parentElement;
+      const p = card ? card.querySelector("p") : null;
+      if (p) p.textContent = "Paste company notes, click Analyze Deal, and the investment thesis will appear here.";
+    }
+  }
+
+  function runDemoAnalysis() {
     const notes = getNotes();
-    const company = getCompanyName();
 
     if (notes.length < 80) {
       showToast("Paste more company notes before analyzing.");
       return;
     }
 
+    const company = getCompanyName();
     const score = Math.min(92, Math.max(68, 70 + Math.floor(notes.length / 180)));
-    const companyShort = company || "Analyzed Company";
 
-    const overallCard = byText("div", "Overall Score");
-    if (overallCard) {
-      const big = overallCard.querySelector(".big");
-      if (big) big.innerHTML = score + "<span> /100</span>";
-    }
+    setMetric("Overall Score", String(score), " /100");
+    setMetric("Investment Fit", score >= 80 ? "High" : "Needs Diligence");
+    setMetric("Deal Stage", "Needs Review");
+    setMetric("Confidence", notes.length > 800 ? "High" : "Medium");
 
-    const fitCard = byText("div", "Investment Fit");
-    if (fitCard) {
-      const mid = fitCard.querySelector(".mid");
-      if (mid) mid.textContent = score >= 80 ? "High" : "Needs Diligence";
-    }
+    setThesis(company);
 
-    const stageCard = byText("div", "Deal Stage");
-    if (stageCard) {
-      const mid = stageCard.querySelector(".mid");
-      if (mid) mid.textContent = "Needs Review";
-    }
+    setStructuredRow("Company Name", company);
+    setStructuredRow("Score", score + " / 100");
+    setStructuredRow("Traction", "Signals extracted from pasted notes.");
+    setStructuredRow("Key Customers", "Requires validation from source material.");
+    setStructuredRow("Investors", "Requires confirmation from source material.");
+    setStructuredRow("Differentiator", "Generated from pasted notes; requires analyst review.");
 
-    const confidenceCard = byText("div", "Confidence");
-    if (confidenceCard) {
-      const mid = confidenceCard.querySelector(".mid");
-      if (mid) mid.textContent = notes.length > 800 ? "High" : "Medium";
-    }
-
-    const thesisCard = byText("h3", "Investment Thesis");
-    if (thesisCard) {
-      const card = thesisCard.closest("div");
-      const p = card ? card.querySelector("p") : null;
-      if (p) {
-        p.textContent =
-          companyShort +
-          " appears to be a potentially interesting private-market opportunity based on the provided notes. The next step is to validate traction quality, customer concentration, revenue durability, competitive differentiation, and financing context before sizing a position.";
-      }
-    }
-
-    updateTextContaining("Company Name", companyShort);
-    updateTextContaining("Score", score + " / 100");
-    updateTextContaining("Differentiator", "Generated from pasted notes; requires analyst review.");
-    updateTextContaining("Traction", "Signals extracted from provided notes.");
-    updateTextContaining("Key Customers", "Requires validation from source material.");
-    updateTextContaining("Investors", "Requires confirmation from source material.");
-
-    updateStatus("Analysis complete", true);
-    showToast("Demo analysis complete. Results updated on the page.");
+    showToast("Demo analysis complete. Page updated.");
   }
 
   function clearWorkspace() {
     document.querySelectorAll("input").forEach(input => {
-      if (input.type !== "radio" && input.type !== "checkbox") input.value = "";
+      if (input.type !== "radio" && input.type !== "checkbox") {
+        input.value = "";
+      }
     });
 
     document.querySelectorAll("textarea").forEach(area => {
       area.value = "";
     });
 
-    const thesisCard = byText("h3", "Investment Thesis");
-    if (thesisCard) {
-      const card = thesisCard.closest("div");
-      const p = card ? card.querySelector("p") : null;
-      if (p) {
-        p.textContent = "Paste company notes, click Analyze Deal, and the investment thesis will appear here.";
-      }
-    }
-
-    updateTextContaining("Company Name", "—");
-    updateTextContaining("Score", "—");
-    updateTextContaining("Differentiator", "—");
-    updateTextContaining("Traction", "Not specified");
-    updateTextContaining("Key Customers", "Not specified");
-    updateTextContaining("Investors", "Not specified");
-
-    updateStatus("Awaiting analysis", false);
+    resetResultState();
     showToast("Workspace cleared.");
-  }
-
-  function wireTopNavigation() {
-    const dealNav = byText("button, div, a", "Deal Intake");
-    const pipelineNav = byText("button, div, a", "Pipeline");
-    const notesNav = byText("button, div, a", "Notes");
-
-    const navItems = [dealNav, pipelineNav, notesNav].filter(Boolean);
-
-    navItems.forEach(item => {
-      item.style.cursor = "pointer";
-      item.addEventListener("click", function () {
-        setActive(navItems, item);
-        showToast(item.textContent.trim() + " selected.");
-      });
-    });
-
-    const openPipeline = byText("button", "Open Pipeline");
-    if (openPipeline && pipelineNav) {
-      openPipeline.addEventListener("click", function () {
-        setActive(navItems, pipelineNav);
-        showToast("Pipeline selected.");
-      });
-    }
   }
 
   function wireResultTabs() {
@@ -1076,52 +1061,344 @@ Treat as an early/growth-stage AI GTM software opportunity. Diligence should con
 
     tabs.forEach(tab => {
       tab.style.cursor = "pointer";
+
       tab.addEventListener("click", function () {
         const target = tab.getAttribute("data-tab");
 
         tabs.forEach(t => t.classList.remove("active"));
         tab.classList.add("active");
 
-        const panels = Array.from(document.querySelectorAll("[data-panel]"));
-        panels.forEach(panel => {
+        document.querySelectorAll("[data-panel]").forEach(panel => {
           panel.style.display = panel.getAttribute("data-panel") === target ? "block" : "none";
         });
-
-        showToast(tab.textContent.trim() + " selected.");
       });
     });
   }
 
-  function wireButtons() {
-    const analyzeButtons = allByText("button", "Analyze Deal");
-    analyzeButtons.forEach(btn => {
+  function wireExportFormats() {
+    const exportPanel = document.querySelector('[data-panel="export"]');
+    if (!exportPanel) return;
+
+    const buttons = Array.from(exportPanel.querySelectorAll("button"));
+    const formatButtons = buttons.filter(btn =>
+      ["JSON", "CSV", "Salesforce"].includes(btn.textContent.trim())
+    );
+
+    formatButtons.forEach(btn => {
       btn.style.cursor = "pointer";
-      btn.addEventListener("click", setResultDemo);
+
+      btn.addEventListener("click", function () {
+        formatButtons.forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
     });
 
-    const clearButton = byText("button", "Clear Workspace");
-    if (clearButton) {
-      clearButton.style.cursor = "pointer";
-      clearButton.addEventListener("click", clearWorkspace);
+    const exportBtn = buttons.find(btn => btn.textContent.includes("Export to CRM"));
+    if (exportBtn) {
+      exportBtn.style.cursor = "pointer";
+      exportBtn.addEventListener("click", function () {
+        const selected = formatButtons.find(btn => btn.classList.contains("active"));
+        const format = selected ? selected.textContent.trim().toLowerCase() : "json";
+        const codeBlock = exportPanel.querySelector("pre, code, textarea, .export-code");
+        const content = codeBlock ? codeBlock.textContent.trim() : "DealFlow AI export";
+
+        const blob = new Blob([content], { type: "text/plain" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+
+        a.href = url;
+        a.download = "dealflow-export." + (format === "csv" ? "csv" : "txt");
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        showToast("Export downloaded.");
+      });
     }
 
-    const newButton = byText("button", "New Analysis");
-    if (newButton) {
-      newButton.style.cursor = "pointer";
-      newButton.addEventListener("click", clearWorkspace);
-    }
-
-    const rerun = byText("button", "Re-run");
-    if (rerun) {
-      rerun.style.cursor = "pointer";
-      rerun.addEventListener("click", setResultDemo);
+    const copyBtn = buttons.find(btn => btn.textContent.trim() === "Copy");
+    if (copyBtn) {
+      copyBtn.style.cursor = "pointer";
+      copyBtn.addEventListener("click", async function () {
+        const codeBlock = exportPanel.querySelector("pre, code, textarea, .export-code");
+        const content = codeBlock ? codeBlock.textContent.trim() : "";
+        try {
+          await navigator.clipboard.writeText(content);
+          showToast("Copied export text.");
+        } catch (e) {
+          showToast("Copy unavailable in this browser.");
+        }
+      });
     }
   }
 
+  function wireWorkspaceButtons() {
+    const analyzeBtn = findButton("Analyze Deal");
+    const clearBtn = findButton("Clear Workspace");
+    const newBtn = findButton("New Analysis");
+    const rerunBtn = findButton("Re-run");
+
+    if (analyzeBtn) analyzeBtn.addEventListener("click", runDemoAnalysis);
+    if (clearBtn) clearBtn.addEventListener("click", clearWorkspace);
+    if (newBtn) newBtn.addEventListener("click", clearWorkspace);
+    if (rerunBtn) rerunBtn.addEventListener("click", runDemoAnalysis);
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
-    wireTopNavigation();
     wireResultTabs();
-    wireButtons();
+    wireExportFormats();
+    wireWorkspaceButtons();
+  });
+})();
+</script>
+
+
+<script>
+/* EXPORT_CRM_DOWNLOAD_FIX_V1 */
+
+(function () {
+  function textIncludes(el, text) {
+    return el && el.textContent && el.textContent.trim().toLowerCase().includes(text.toLowerCase());
+  }
+
+  function findExportPanel() {
+    const direct = document.querySelector('[data-panel="export"]');
+    if (direct) return direct;
+
+    const heading = Array.from(document.querySelectorAll("h1,h2,h3,h4,div")).find(el =>
+      el.textContent && el.textContent.trim() === "Export CRM-ready Data"
+    );
+
+    return heading ? heading.closest(".panel-card") || heading.parentElement : null;
+  }
+
+  function findButtonByText(scope, text) {
+    return Array.from(scope.querySelectorAll("button, .btn, .format-btn")).find(el =>
+      textIncludes(el, text)
+    );
+  }
+
+  function getActiveFormat(panel) {
+    const buttons = Array.from(panel.querySelectorAll("button, .btn, .format-btn"));
+    const active = buttons.find(btn =>
+      btn.classList.contains("active") &&
+      ["JSON", "CSV", "Salesforce"].includes(btn.textContent.trim())
+    );
+
+    if (active) return active.textContent.trim().toLowerCase();
+
+    const selected = buttons.find(btn =>
+      ["JSON", "CSV", "Salesforce"].includes(btn.textContent.trim())
+    );
+
+    return selected ? selected.textContent.trim().toLowerCase() : "json";
+  }
+
+  function getCompanyInput() {
+    const inputs = Array.from(document.querySelectorAll("input"));
+    const filled = inputs.find(input =>
+      input.type !== "radio" &&
+      input.type !== "checkbox" &&
+      input.value &&
+      input.value.trim().length > 0
+    );
+
+    return filled ? filled.value.trim() : "";
+  }
+
+  function getField(label, fallback) {
+    const rows = Array.from(document.querySelectorAll(".sr-row, tr"));
+
+    for (const row of rows) {
+      const key = row.querySelector(".sr-k, td:first-child");
+      const val = row.querySelector(".sr-v, td:last-child");
+
+      if (key && val && key.textContent.trim() === label) {
+        const text = val.textContent.trim();
+        if (text && text !== "—") return text;
+      }
+    }
+
+    if (label === "Company Name") {
+      const companyInput = getCompanyInput();
+      if (companyInput) return companyInput;
+    }
+
+    return fallback || "";
+  }
+
+  function csvEscape(value) {
+    const text = String(value || "");
+    if (text.includes(",") || text.includes('"') || text.includes("\n")) {
+      return '"' + text.replaceAll('"', '""') + '"';
+    }
+    return text;
+  }
+
+  function buildExport(format) {
+    const data = {
+      company: getField("Company Name", "Unify"),
+      category: getField("Category", "GTM / Sales Engagement Software"),
+      sub_category: getField("Sub-Category", "Outbound Sales & Engagement"),
+      stage: getField("Stage", "Early Growth"),
+      business_model: getField("Business Model", "SaaS subscription"),
+      target_market: getField("Target Market", "High-growth AI/tech startups"),
+      traction: getField("Traction", "Rapid revenue growth; customer logos referenced"),
+      key_customers: getField("Key Customers", "Cursor, Perplexity, Together AI, others"),
+      investors: getField("Investors", "Batter, OpenAI Startup Fund, Thrive, Emergence"),
+      differentiator: getField("Differentiator", "AI agents across data, signals, sequencing, deliverability"),
+      score: getField("Score", "78 / 100"),
+      rating: getField("Rating", "Attractive"),
+      confidence: getField("Confidence", "High")
+    };
+
+    if (format === "csv") {
+      const headers = Object.keys(data);
+      const values = headers.map(key => csvEscape(data[key]));
+      return headers.join(",") + "\n" + values.join(",");
+    }
+
+    if (format === "salesforce") {
+      return [
+        'Account.Name = "' + data.company + '"',
+        'Account.Industry = "' + data.category + '"',
+        'Account.Stage__c = "' + data.stage + '"',
+        'Account.Score__c = "' + data.score + '"',
+        'Account.Rating__c = "' + data.rating + '"',
+        'Account.Confidence__c = "' + data.confidence + '"',
+        'Account.Source__c = "DealFlow AI"'
+      ].join("\n");
+    }
+
+    return JSON.stringify(data, null, 2);
+  }
+
+  function findPreviewBox(panel) {
+    const selectors = ["pre", "code", "textarea", ".export-code", ".code-block", ".export-preview"];
+
+    for (const selector of selectors) {
+      const el = panel.querySelector(selector);
+      if (el) return el;
+    }
+
+    const candidates = Array.from(panel.querySelectorAll("div")).filter(el => {
+      const text = el.textContent || "";
+      return (
+        text.includes("company") ||
+        text.includes("Account.Name") ||
+        text.includes("category") ||
+        text.includes("score")
+      );
+    });
+
+    candidates.sort((a, b) => a.querySelectorAll("*").length - b.querySelectorAll("*").length);
+    return candidates[0] || null;
+  }
+
+  function setPreview(panel, format) {
+    const box = findPreviewBox(panel);
+    if (!box) return;
+
+    box.textContent = buildExport(format);
+  }
+
+  function showToast(message) {
+    let toast = document.getElementById("df-toast");
+
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "df-toast";
+      toast.style.position = "fixed";
+      toast.style.right = "22px";
+      toast.style.bottom = "22px";
+      toast.style.zIndex = "9999";
+      toast.style.padding = "12px 16px";
+      toast.style.borderRadius = "12px";
+      toast.style.background = "rgba(18,31,51,0.96)";
+      toast.style.border = "1px solid rgba(91,124,250,0.45)";
+      toast.style.boxShadow = "0 18px 40px rgba(0,0,0,0.35)";
+      toast.style.color = "#e7ecf6";
+      toast.style.fontSize = "13px";
+      toast.style.fontWeight = "700";
+      document.body.appendChild(toast);
+    }
+
+    toast.textContent = message;
+    toast.style.opacity = "1";
+
+    setTimeout(function () {
+      toast.style.opacity = "0";
+    }, 2200);
+  }
+
+  function wireExportFix() {
+    const panel = findExportPanel();
+    if (!panel) return;
+
+    const formatButtons = Array.from(panel.querySelectorAll("button, .btn, .format-btn")).filter(btn =>
+      ["JSON", "CSV", "Salesforce"].includes(btn.textContent.trim())
+    );
+
+    formatButtons.forEach(btn => {
+      btn.addEventListener("click", function () {
+        setTimeout(function () {
+          setPreview(panel, btn.textContent.trim().toLowerCase());
+        }, 30);
+      });
+    });
+
+    const exportBtn = findButtonByText(panel, "Export to CRM");
+
+    if (exportBtn) {
+      exportBtn.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        const format = getActiveFormat(panel);
+        const content = buildExport(format);
+        const extension = format === "csv" ? "csv" : "txt";
+        const type = format === "csv" ? "text/csv" : "text/plain";
+
+        const blob = new Blob([content], { type: type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+
+        a.href = url;
+        a.download = "dealflow-export." + extension;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+
+        showToast("Export downloaded.");
+      }, true);
+    }
+
+    const copyBtn = findButtonByText(panel, "Copy");
+
+    if (copyBtn) {
+      copyBtn.addEventListener("click", async function (event) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+
+        const format = getActiveFormat(panel);
+        const content = buildExport(format);
+
+        try {
+          await navigator.clipboard.writeText(content);
+          showToast("Copied export text.");
+        } catch (error) {
+          showToast("Copy unavailable in this browser.");
+        }
+      }, true);
+    }
+
+    setPreview(panel, getActiveFormat(panel));
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(wireExportFix, 200);
   });
 })();
 </script>
