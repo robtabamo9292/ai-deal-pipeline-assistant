@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DealFlow AI — Analyst Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0e1a;
+    --panel:#0e1424;
+    --panel-2:#111a2e;
+    --card:#141d31;
+    --card-2:#17223a;
+    --border:#1f2a44;
+    --border-soft:#1a2640;
+    --text:#e7ecf6;
+    --text-2:#aab4c8;
+    --text-3:#7c8699;
+    --text-4:#5e6878;
+    --blue:#5b7cfa;
+    --blue-2:#4f7cff;
+    --blue-deep:#2a3d7a;
+    --green:#4ade80;
+    --green-2:#34d399;
+    --yellow:#fbbf24;
+    --amber:#f0a93b;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    font-size:14px;
+    line-height:1.45;
+  }
+  ::-webkit-scrollbar{width:10px;height:10px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#243150;border-radius:8px;border:2px solid var(--panel);}
+  ::-webkit-scrollbar-thumb:hover{background:#2e3d63;}
+
+  a{color:inherit;text-decoration:none;}
+  .muted{color:var(--text-3);}
+  .muted2{color:var(--text-2);}
+  .green{color:var(--green);}
+  .yellow{color:var(--yellow);}
+
+  /* ---------- Top Bar ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:36px;
+    padding:14px 26px;
+    border-bottom:1px solid var(--border-soft);
+    background:linear-gradient(180deg,#0c1322 0%, #0a101d 100%);
+    position:sticky;top:0;z-index:20;
+  }
+  .brand{display:flex;align-items:center;gap:13px;min-width:230px;}
+  .logo{
+    width:46px;height:46px;border-radius:13px;
+    background:linear-gradient(150deg,#5b8cff 0%, #6b6bff 55%, #8a5bff 100%);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 4px 18px rgba(91,124,250,.35);
+  }
+  .brand h1{font-size:21px;font-weight:700;letter-spacing:-.2px;}
+  .brand p{font-size:11.5px;color:var(--text-3);margin-top:1px;letter-spacing:.1px;}
+
+  .nav{display:flex;align-items:center;gap:8px;}
+  .nav .tab{
+    display:flex;align-items:center;gap:9px;
+    padding:11px 16px;border-radius:10px;
+    color:var(--text-3);font-weight:500;cursor:pointer;
+    position:relative;
+  }
+  .nav .tab svg{width:17px;height:17px;}
+  .nav .tab:hover{color:var(--text-2);}
+  .nav .tab.active{color:#fff;background:rgba(91,124,250,.08);}
+  .nav .tab.active b{font-weight:600;}
+  .nav .tab.active::after{
+    content:"";position:absolute;left:14px;right:14px;bottom:-15px;height:2px;
+    background:var(--blue);border-radius:2px;
+  }
+
+  .top-actions{margin-left:auto;display:flex;align-items:center;gap:18px;}
+  .icon-btn{
+    width:38px;height:38px;border-radius:10px;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--text-3);cursor:pointer;
+  }
+  .icon-btn:hover{background:rgba(255,255,255,.04);color:var(--text-2);}
+  .icon-btn svg{width:19px;height:19px;}
+  .user{
+    display:flex;align-items:center;gap:11px;
+    padding:7px 12px 7px 8px;border:1px solid var(--border);
+    border-radius:11px;cursor:pointer;background:rgba(255,255,255,.015);
+  }
+  .user:hover{border-color:#2a3a5e;}
+  .avatar{
+    width:34px;height:34px;border-radius:9px;
+    background:linear-gradient(150deg,#3a4a86,#5b6bd8);
+    display:flex;align-items:center;justify-content:center;
+    font-weight:600;font-size:12.5px;color:#dfe6ff;
+  }
+  .user .name{font-size:13.5px;font-weight:600;line-height:1.2;}
+  .user .role{font-size:11px;color:var(--text-3);}
+  .user svg{width:15px;height:15px;color:var(--text-3);}
+
+  /* ---------- Layout ---------- */
+  .layout{
+    display:grid;
+    grid-template-columns:300px minmax(0,0.92fr) minmax(0,1.18fr);
+    gap:0;
+    align-items:stretch;
+  }
+  .sidebar{
+    border-right:1px solid var(--border-soft);
+    padding:24px 22px 30px;
+    background:#0b101e;
+  }
+  .col{
+    padding:28px 30px 40px;
+  }
+  .col.mid{border-right:1px solid var(--border-soft);}
+
+  .section-label{
+    font-size:11px;font-weight:600;letter-spacing:1.4px;
+    color:var(--text-4);text-transform:uppercase;margin-bottom:14px;
+  }
+
+  /* ---------- Workflow steps ---------- */
+  .wf-label{font-size:13px;color:var(--text-3);font-weight:500;margin:4px 0 12px;}
+  .step{
+    display:flex;align-items:center;gap:13px;
+    padding:11px 13px;border-radius:11px;margin-bottom:4px;cursor:pointer;
+  }
+  .step:hover{background:rgba(255,255,255,.025);}
+  .step.active{background:rgba(91,124,250,.13);box-shadow:inset 0 0 0 1px rgba(91,124,250,.25);}
+  .step .num{
+    width:26px;height:26px;border-radius:50%;flex:none;
+    display:flex;align-items:center;justify-content:center;
+    font-size:12.5px;font-weight:600;
+    border:1.5px solid #2c3a5c;color:var(--text-3);
+  }
+  .step.active .num{background:var(--blue);border-color:var(--blue);color:#fff;}
+  .step .txt{font-size:13.5px;color:var(--text-3);font-weight:500;}
+  .step.active .txt{color:#fff;font-weight:600;}
+
+  .divider-space{height:26px;}
+
+  /* limitations */
+  .lim{display:flex;gap:11px;align-items:flex-start;margin-bottom:11px;font-size:12.5px;color:var(--text-3);}
+  .lim .dot{width:6px;height:6px;border-radius:50%;background:var(--green);margin-top:6px;flex:none;}
+
+  /* analysis engine */
+  .engine{
+    display:flex;align-items:center;gap:12px;
+    border:1px solid var(--border);border-radius:11px;
+    padding:13px 14px;background:rgba(255,255,255,.012);
+  }
+  .engine .e-name{font-size:13.5px;font-weight:600;flex:1;}
+  .badge-green{
+    font-size:11px;font-weight:600;color:#76e6a3;
+    background:rgba(74,222,128,.13);border:1px solid rgba(74,222,128,.22);
+    padding:3px 9px;border-radius:7px;
+  }
+  .engine svg{width:15px;height:15px;color:var(--text-3);}
+
+  /* action buttons */
+  .btn{
+    width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
+    padding:14px;border-radius:11px;font-size:14px;font-weight:600;cursor:pointer;
+    border:1px solid transparent;
+  }
+  .btn svg{width:16px;height:16px;}
+  .btn-primary{background:var(--blue-2);color:#fff;box-shadow:0 6px 18px rgba(79,124,255,.3);}
+  .btn-primary:hover{background:#5d87ff;}
+  .btn-ghost{background:rgba(255,255,255,.02);border-color:var(--border);color:var(--text-2);margin-top:11px;}
+  .btn-ghost:hover{border-color:#2a3a5e;background:rgba(255,255,255,.04);}
+
+  /* pipeline quick view */
+  .quick{
+    border:1px solid var(--border-soft);border-radius:14px;
+    padding:18px 18px 20px;background:rgba(255,255,255,.012);
+  }
+  .quick h4{font-size:11px;font-weight:600;letter-spacing:1.2px;color:var(--text-4);text-transform:uppercase;margin-bottom:16px;}
+  .quick-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+  .quick-grid .k{font-size:11.5px;color:var(--text-3);margin-bottom:5px;}
+  .quick-grid .v{font-size:26px;font-weight:700;line-height:1;}
+  .quick .watch{margin-bottom:16px;}
+  .quick .watch .k{font-size:11.5px;color:var(--text-3);margin-bottom:5px;}
+  .quick .watch .v{font-size:26px;font-weight:700;line-height:1;}
+  .btn-quick{
+    width:100%;text-align:center;padding:12px;border-radius:10px;
+    border:1px solid var(--border);color:var(--text-2);font-size:13px;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn-quick:hover{border-color:#2a3a5e;background:rgba(255,255,255,.03);}
+  .btn-quick svg{width:13px;height:13px;}
+
+  /* ---------- Middle / Right headings ---------- */
+  .h-title{font-size:23px;font-weight:700;letter-spacing:-.3px;}
+  .h-sub{font-size:13.5px;color:var(--text-3);margin-top:6px;}
+  .field-label{font-size:12.5px;font-weight:600;color:var(--text-2);margin:0 0 11px;letter-spacing:.2px;}
+  .block{margin-top:26px;}
+
+  /* radio cards */
+  .radio-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+  .radio-card{
+    border:1px solid var(--border);border-radius:12px;padding:16px 16px;
+    display:flex;gap:13px;align-items:flex-start;cursor:pointer;background:rgba(255,255,255,.012);
+  }
+  .radio-card:hover{border-color:#2a3a5e;}
+  .radio-card.sel{border-color:var(--blue);background:rgba(91,124,250,.07);box-shadow:0 0 0 1px rgba(91,124,250,.3) inset;}
+  .radio{
+    width:18px;height:18px;border-radius:50%;border:2px solid #38456a;flex:none;margin-top:2px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .radio-card.sel .radio{border-color:var(--blue);}
+  .radio-card.sel .radio::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--blue);}
+  .radio-card .rc-t{font-size:14px;font-weight:600;}
+  .radio-card .rc-d{font-size:12px;color:var(--text-3);margin-top:3px;}
+
+  /* inputs */
+  .input{
+    width:100%;background:#0c1322;border:1px solid var(--border);
+    border-radius:11px;padding:14px 15px;color:var(--text);font-size:14px;
+    font-family:inherit;
+  }
+  .input::placeholder{color:var(--text-4);}
+  .input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(91,124,250,.12);}
+  .select-wrap{position:relative;}
+  .select-wrap svg{position:absolute;right:15px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text-3);pointer-events:none;}
+  select.input{appearance:none;-webkit-appearance:none;cursor:pointer;padding-right:42px;}
+
+  /* notes textarea */
+  .notes-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:11px;}
+  .tips{
+    display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-3);
+    border:1px solid var(--border);border-radius:8px;padding:6px 11px;cursor:pointer;background:rgba(255,255,255,.015);
+  }
+  .tips:hover{border-color:#2a3a5e;color:var(--text-2);}
+  .tips svg{width:13px;height:13px;}
+  .notes-box{
+    border:1px solid var(--border);border-radius:12px;background:#0c1322;overflow:hidden;
+  }
+  .notes-area{
+    width:100%;height:430px;resize:none;border:none;background:transparent;
+    color:var(--text-2);font-size:13.2px;line-height:1.62;padding:18px 18px;font-family:inherit;
+  }
+  .notes-area:focus{outline:none;}
+  .notes-area p{margin-bottom:14px;}
+  .notes-foot{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:11px 16px;border-top:1px solid var(--border-soft);font-size:12px;color:var(--text-3);
+  }
+  .expand{display:flex;align-items:center;gap:7px;color:var(--blue);cursor:pointer;font-weight:500;}
+  .expand svg{width:13px;height:13px;}
+
+  /* ---------- Right column ---------- */
+  .right-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+  .right-head .pills{display:flex;align-items:center;gap:11px;flex:none;margin-top:4px;}
+  .pill-status{
+    display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#76e6a3;
+    background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.2);border-radius:10px;padding:9px 14px;
+  }
+  .pill-status .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);}
+  .pill-rerun{
+    display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--text-2);
+    border:1px solid var(--border);border-radius:10px;padding:9px 14px;cursor:pointer;background:rgba(255,255,255,.015);
+  }
+  .pill-rerun:hover{border-color:#2a3a5e;}
+  .pill-rerun svg{width:14px;height:14px;}
+
+  /* stat cards */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:24px;}
+  .stat{
+    border:1px solid var(--border-soft);border-radius:14px;padding:17px 17px 18px;
+    background:linear-gradient(180deg,rgba(255,255,255,.022),rgba(255,255,255,.006));
+  }
+  .stat .k{font-size:12px;color:var(--text-3);margin-bottom:11px;}
+  .stat .big{font-size:30px;font-weight:700;line-height:1;}
+  .stat .big span{font-size:15px;color:var(--text-3);font-weight:500;}
+  .stat .mid{font-size:21px;font-weight:700;line-height:1;}
+  .stat .note{font-size:12px;margin-top:9px;}
+
+  /* tabs */
+  .tabs{display:flex;align-items:center;gap:30px;margin-top:26px;border-bottom:1px solid var(--border-soft);padding-bottom:0;}
+  .tabs .t{
+    font-size:14px;color:var(--text-3);font-weight:500;padding-bottom:14px;cursor:pointer;position:relative;
+  }
+  .tabs .t:hover{color:var(--text-2);}
+  .tabs .t.active{color:#fff;font-weight:600;}
+  .tabs .t.active::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--blue);border-radius:2px;}
+
+  .panel-card{
+    border:1px solid var(--border-soft);border-radius:14px;padding:22px 24px;
+    background:rgba(255,255,255,.012);margin-top:22px;
+  }
+  .panel-card h3{font-size:15.5px;font-weight:700;margin-bottom:13px;}
+  .panel-card p{font-size:13.5px;color:var(--text-2);line-height:1.66;}
+
+  .two-cards{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px;}
+  .li{display:flex;gap:12px;align-items:flex-start;margin-bottom:15px;font-size:13.2px;color:var(--text-2);line-height:1.5;}
+  .li:last-child{margin-bottom:0;}
+  .ic{width:18px;height:18px;flex:none;margin-top:1px;}
+  .ic-up{color:var(--green);}
+  .ic-risk{color:var(--amber);}
+
+  /* structured results */
+  .sr-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .sr-head h3{font-size:15.5px;font-weight:700;}
+  .view-all{
+    font-size:12.5px;font-weight:600;color:var(--text-2);border:1px solid var(--border);
+    border-radius:9px;padding:8px 13px;cursor:pointer;background:rgba(255,255,255,.015);
+  }
+  .view-all:hover{border-color:#2a3a5e;}
+  .sr-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 48px;}
+  .sr-row{display:grid;grid-template-columns:128px 1fr;gap:14px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.045);align-items:start;}
+  .sr-row:last-child{border-bottom:none;}
+  .sr-k{font-size:13px;color:var(--text-3);font-weight:500;}
+  .sr-v{font-size:13px;color:var(--text);font-weight:500;line-height:1.45;}
+
+  .banner{
+    display:flex;align-items:center;gap:13px;margin-top:22px;
+    border:1px solid rgba(91,124,250,.2);border-radius:14px;padding:18px 22px;
+    background:rgba(91,124,250,.06);font-size:13.5px;color:var(--text-2);
+  }
+  .banner svg{width:19px;height:19px;color:var(--blue);flex:none;}
+
+  /* tab panels */
+  .tab-panel{display:none;}
+  .tab-panel.show{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+  .tabs .t{user-select:none;}
+
+  /* diligence questions */
+  .dq-group{margin-bottom:22px;}
+  .dq-group:last-child{margin-bottom:0;}
+  .dq-cat{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--blue);margin-bottom:13px;}
+  .dq{display:flex;gap:13px;align-items:flex-start;margin-bottom:13px;font-size:13.4px;color:var(--text-2);line-height:1.55;}
+  .dq:last-child{margin-bottom:0;}
+  .dq .qn{width:24px;height:24px;border-radius:7px;flex:none;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:#aebbff;background:rgba(91,124,250,.13);border:1px solid rgba(91,124,250,.22);}
+
+  /* risks & mitigants */
+  .rm{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;}
+  .rm-card{border:1px solid var(--border-soft);border-radius:12px;padding:16px 17px;background:rgba(255,255,255,.012);}
+  .rm-risk{display:flex;gap:10px;align-items:flex-start;font-size:13.4px;font-weight:600;color:var(--text);margin-bottom:11px;line-height:1.45;}
+  .rm-risk svg{width:17px;height:17px;color:var(--amber);flex:none;margin-top:1px;}
+  .rm-mit{display:flex;gap:10px;align-items:flex-start;font-size:12.8px;color:var(--text-2);line-height:1.55;}
+  .rm-mit svg{width:16px;height:16px;color:var(--green);flex:none;margin-top:1px;}
+  .rm-mlabel{font-size:10.5px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:var(--text-4);margin-bottom:7px;}
+
+  /* export */
+  .exp-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap;}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:rgba(255,255,255,.012);}
+  .seg button{padding:9px 16px;font-size:12.5px;font-weight:600;color:var(--text-3);background:transparent;border:none;cursor:pointer;font-family:inherit;}
+  .seg button.on{background:var(--blue-2);color:#fff;}
+  .exp-pre{background:#0a1020;border:1px solid var(--border);border-radius:11px;padding:16px 18px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:#9fc6ff;line-height:1.7;white-space:pre;overflow-x:auto;}
+  .exp-pre .key{color:#7c8699;}
+  .btn-export{margin-top:16px;width:auto;display:inline-flex;padding:13px 22px;}
+
+  @media(max-width:1180px){
+    .layout{grid-template-columns:1fr;}
+    .sidebar{border-right:none;border-bottom:1px solid var(--border-soft);}
+    .col.mid{border-right:none;border-bottom:1px solid var(--border-soft);}
+    .stats{grid-template-columns:repeat(2,1fr);}
+    .nav{display:none;}
+  }
+  @media(max-width:640px){
+    .radio-row,.two-cards,.sr-grid,.stats,.quick-grid,.rm{grid-template-columns:1fr;}
+    .topbar{gap:16px;flex-wrap:wrap;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== TOP BAR ===================== -->
+<header class="topbar">
+  <div class="brand">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="none"><path d="M12 2.5 21 9.5 12 21.5 3 9.5 12 2.5Z" fill="#fff" fill-opacity=".92"/><path d="M12 2.5 21 9.5 12 16 3 9.5 12 2.5Z" fill="#fff"/></svg>
+    </div>
+    <div>
+      <h1>DealFlow AI</h1>
+      <p>AI Deal Pipeline Assistant</p>
+    </div>
+  </div>
+
+  <nav class="nav">
+    <div class="tab active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></svg>
+      <b>Deal Intake</b>
+    </div>
+    <div class="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 18V8M10 18V5M16 18v-7M21 18H3"/></svg>
+      Pipeline
+    </div>
+    <div class="tab">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>
+      Notes
+    </div>
+  </nav>
+
+  <div class="top-actions">
+    <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></svg></div>
+    <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.1 1-1.1 1.8M12 17h.01"/></svg></div>
+    <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+    <div class="user">
+      <div class="avatar">AR</div>
+      <div>
+        <div class="name">Alex Rivera</div>
+        <div class="role">Analyst</div>
+      </div>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== LAYOUT ===================== -->
+<div class="layout">
+
+  <!-- ---------- SIDEBAR ---------- -->
+  <aside class="sidebar">
+    <div class="section-label">Product Context</div>
+
+    <div class="wf-label">Workflow</div>
+    <div class="step active">
+      <div class="num">1</div><div class="txt">Paste deal notes</div>
+    </div>
+    <div class="step">
+      <div class="num">2</div><div class="txt">Extract structured fields</div>
+    </div>
+    <div class="step">
+      <div class="num">3</div><div class="txt">Score opportunity</div>
+    </div>
+    <div class="step">
+      <div class="num">4</div><div class="txt">Generate diligence questions</div>
+    </div>
+    <div class="step">
+      <div class="num">5</div><div class="txt">Export CRM-ready data</div>
+    </div>
+
+    <div class="divider-space"></div>
+
+    <div class="section-label">Limitations</div>
+    <div class="lim"><span class="dot"></span>Uses only the text provided</div>
+    <div class="lim"><span class="dot"></span>Does not verify external facts</div>
+    <div class="lim"><span class="dot"></span>Requires human review</div>
+    <div class="lim"><span class="dot"></span>Not investment advice</div>
+
+    <div class="divider-space"></div>
+
+    <div class="section-label">Analysis Engine</div>
+    <div class="engine">
+      <span class="e-name">Agents SDK v2</span>
+      <span class="badge-green">Active</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+    </div>
+
+    <div class="divider-space"></div>
+
+    <div class="section-label">Actions</div>
+    <button class="btn btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m12 3 1.8 4.7L18.5 9l-4.7 1.8L12 15.5 10.2 10.8 5.5 9l4.7-1.3L12 3Z"/></svg>
+      Analyze Deal
+    </button>
+    <button class="btn btn-ghost">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>
+      Clear Workspace
+    </button>
+    <button class="btn btn-ghost">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
+      New Analysis
+    </button>
+
+    <div class="divider-space"></div>
+
+    <div class="quick">
+      <h4>Pipeline Quick View</h4>
+      <div class="quick-grid">
+        <div><div class="k">Total Deals</div><div class="v">42</div></div>
+        <div><div class="k">In Analysis</div><div class="v">7</div></div>
+        <div><div class="k">High Score</div><div class="v yellow">9</div></div>
+      </div>
+      <div class="watch">
+        <div class="k">Watchlist</div>
+        <div class="v">5</div>
+      </div>
+      <button class="btn-quick">Open Pipeline
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M9 7h8v8"/></svg>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ---------- MIDDLE COLUMN ---------- -->
+  <main class="col mid">
+    <div class="h-title">1. Deal Intake</div>
+    <div class="h-sub">Paste unstructured notes and provide basic context.</div>
+
+    <div class="block">
+      <div class="field-label">Analysis Mode</div>
+      <div class="radio-row">
+        <div class="radio-card">
+          <div class="radio"></div>
+          <div>
+            <div class="rc-t">Sample Company Demo</div>
+            <div class="rc-d">Use demo data to explore</div>
+          </div>
+        </div>
+        <div class="radio-card sel">
+          <div class="radio"></div>
+          <div>
+            <div class="rc-t">Custom Company Analysis</div>
+            <div class="rc-d">Analyze your company notes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="field-label">Company Name</div>
+      <input class="input" type="text" value="Unify" />
+    </div>
+
+    <div class="block">
+      <div class="field-label">Source Type</div>
+      <div class="select-wrap">
+        <select class="input">
+          <option>Research notes</option>
+          <option>Call transcript</option>
+          <option>Pitch deck</option>
+          <option>Email thread</option>
+        </select>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+      </div>
+    </div>
+
+    <div class="block">
+      <div class="field-label">Optional Investment Focus</div>
+      <input class="input" type="text" placeholder="e.g., InsurTech, B2B SaaS, AI workflow automation, fintech infrastructure" />
+    </div>
+
+    <div class="block">
+      <div class="notes-head">
+        <div class="field-label" style="margin:0;">Paste Company Notes</div>
+        <div class="tips">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
+          Tips for best results
+        </div>
+      </div>
+      <div class="notes-box">
+        <textarea class="notes-area" spellcheck="false">Unify appears to be an early-to-growth-stage, AI-native GTM software company operating in the crowded outbound sales and sales-engagement category. The product consolidates functions that have historically been split across separate tools (data/enrichment, intent signals, sequencing, deliverability), with AI agents as the differentiator.
+
+Reported traction is strong for its stage: rapid revenue growth, low-to-mid-six figure enterprise contracts, ~30–40 new customers per month, and notable AI-startup logos (Cursor, Perplexity, Together AI) that signal product-market fit within the high-growth tech ecosystem.
+
+Potential investment signals include a large GTM/sales-tech TAM, fast revenue growth off a small base, top-tier customer logos, strong investor syndicate (Battery, OpenAI Startup Fund, Thrive, Emergence), and a credible "AI agent" wedge into an established category.
+
+Potential risks include intense competition from Clay, Apollo, Outreach, Salesloft, Amplemarket, Gong Engage, Instantly, Nooks, and incumbents like 6sense and Demandbase as Unify moves upstream into intent data. Additional concerns: customer concentration in a single buyer profile (high-growth AI/tech startups, which can churn or cut spend in a downturn), durability of the AI differentiation vs competitors add similar agent features, deliverability/compliance risk inherent to high-volume outbound, and early-stage metrics (NRR, gross margin, true ARR, logo retention) that remain unverified.
+
+Recommended next step:
+Treat as an early/growth-stage AI GTM software opportunity. Diligence should confirm current ARR and growth rate, net revenue retention and churn, gross margins (factoring data and inference costs), customer concentration beyond the AI-startup cohort, defensibility of the agent layer versus Clay and incumbents, and any post-Series B financing or "next chapter" development before sizing a position.</textarea>
+        <div class="notes-foot">
+          <span>2,148 characters · 380 words</span>
+          <span class="expand">Expand editor
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+          </span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ---------- RIGHT COLUMN ---------- -->
+  <section class="col">
+    <div class="right-head">
+      <div>
+        <div class="h-title">2. Live Analysis &amp; Results</div>
+        <div class="h-sub">Real-time analysis and structured output based on your notes.</div>
+      </div>
+      <div class="pills">
+        <div class="pill-status"><span class="dot"></span>Analysis complete</div>
+        <div class="pill-rerun">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M21 12a9 9 0 1 1-2.6-6.3M21 4v5h-5"/></svg>
+          Re-run
+        </div>
+      </div>
+    </div>
+
+    <!-- stat cards -->
+    <div class="stats">
+      <div class="stat">
+        <div class="k">Overall Score</div>
+        <div class="big">78<span> /100</span></div>
+        <div class="note green">Attractive</div>
+      </div>
+      <div class="stat">
+        <div class="k">Investment Fit</div>
+        <div class="mid">High</div>
+        <div class="note green">Strong strategic fit</div>
+      </div>
+      <div class="stat">
+        <div class="k">Deal Stage</div>
+        <div class="mid">Early Growth</div>
+        <div class="note muted">Scaling traction</div>
+      </div>
+      <div class="stat">
+        <div class="k">Confidence</div>
+        <div class="mid">High</div>
+        <div class="note muted">Based on provided notes</div>
+      </div>
+    </div>
+
+    <!-- tabs -->
+    <div class="tabs" id="analysisTabs">
+      <div class="t active" data-tab="exec">Executive Summary</div>
+      <div class="t" data-tab="fields">Structured Fields</div>
+      <div class="t" data-tab="diligence">Diligence Questions</div>
+      <div class="t" data-tab="risks">Risks &amp; Mitigants</div>
+      <div class="t" data-tab="export">Export</div>
+    </div>
+
+    <!-- ===== EXECUTIVE SUMMARY PANEL ===== -->
+    <div class="tab-panel show" data-panel="exec">
+    <!-- investment thesis -->
+    <div class="panel-card">
+      <h3>Investment Thesis</h3>
+      <p>Unify is an AI-native GTM platform consolidating fragmented sales tools with AI agents as a differentiator. Strong early traction, rapid revenue growth, and high-quality AI startup logos suggest product-market fit in a large GTM/sales-tech market. Backed by top-tier investors with a credible wedge into an established category.</p>
+    </div>
+
+    <!-- upsides / risks -->
+    <div class="two-cards">
+      <div class="panel-card" style="margin-top:0;">
+        <h3>Key Upsides</h3>
+        <div class="li"><svg class="ic ic-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg>Large GTM/Sales-tech TAM with multiple expansion vectors</div>
+        <div class="li"><svg class="ic ic-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg>Rapid revenue growth from small base</div>
+        <div class="li"><svg class="ic ic-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg>Strong customer logos and early product-market fit</div>
+        <div class="li"><svg class="ic ic-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg>Backed by high-quality investors (OpenAI Startup Fund, Battery, Thrive)</div>
+        <div class="li"><svg class="ic ic-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg>AI agent wedge into fragmented point-solution market</div>
+      </div>
+      <div class="panel-card" style="margin-top:0;">
+        <h3>Key Risks</h3>
+        <div class="li"><svg class="ic ic-risk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Intense competition from Clay, Apollo, Outreach, Salesloft, 6sense, Demandbase, others</div>
+        <div class="li"><svg class="ic ic-risk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Customer concentration in high-growth AI/tech startups</div>
+        <div class="li"><svg class="ic ic-risk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Deliverability &amp; compliance risks with high-volume outbound</div>
+        <div class="li"><svg class="ic ic-risk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Durability of AI differentiation vs. competitor feature parity</div>
+        <div class="li"><svg class="ic ic-risk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Unverified unit economics (NRR, gross margin, logo retention)</div>
+      </div>
+    </div>
+
+    <!-- structured results preview -->
+    <div class="panel-card">
+      <div class="sr-head">
+        <h3>Structured Results Preview</h3>
+        <div class="view-all">View all fields</div>
+      </div>
+      <div class="sr-grid">
+        <div>
+          <div class="sr-row"><div class="sr-k">Company Name</div><div class="sr-v">Unify</div></div>
+          <div class="sr-row"><div class="sr-k">Category</div><div class="sr-v">GTM / Sales Engagement Software</div></div>
+          <div class="sr-row"><div class="sr-k">Sub-Category</div><div class="sr-v">Outbound Sales &amp; Engagement</div></div>
+          <div class="sr-row"><div class="sr-k">Stage</div><div class="sr-v">Early Growth</div></div>
+          <div class="sr-row"><div class="sr-k">HQ / Geography</div><div class="sr-v muted">Not specified</div></div>
+          <div class="sr-row"><div class="sr-k">Business Model</div><div class="sr-v">SaaS (subscription)</div></div>
+          <div class="sr-row"><div class="sr-k">Target Market</div><div class="sr-v">High-growth AI/tech startups</div></div>
+        </div>
+        <div>
+          <div class="sr-row"><div class="sr-k">Traction</div><div class="sr-v">Rapid revenue growth; 30–40 new customers/mo; low-to-mid-six figure enterprise contracts</div></div>
+          <div class="sr-row"><div class="sr-k">Key Customers</div><div class="sr-v">Cursor, Perplexity, Together AI, others</div></div>
+          <div class="sr-row"><div class="sr-k">Investors</div><div class="sr-v">Battery, OpenAI Startup Fund, Thrive, Emergence</div></div>
+          <div class="sr-row"><div class="sr-k">TAM</div><div class="sr-v">Large (GTM / Sales-tech)</div></div>
+          <div class="sr-row"><div class="sr-k">Differentiator</div><div class="sr-v">AI agents across data, signals, sequencing, deliverability</div></div>
+          <div class="sr-row"><div class="sr-k">Score</div><div class="sr-v yellow">78 / 100 (Attractive)</div></div>
+        </div>
+      </div>
+    </div>
+    </div><!-- /exec panel -->
+
+    <!-- ===== STRUCTURED FIELDS PANEL ===== -->
+    <div class="tab-panel" data-panel="fields">
+      <div class="panel-card">
+        <div class="sr-head">
+          <h3>Structured Fields</h3>
+          <div class="view-all">Copy as JSON</div>
+        </div>
+        <div class="sr-grid">
+          <div>
+            <div class="sr-row"><div class="sr-k">Company Name</div><div class="sr-v">Unify</div></div>
+            <div class="sr-row"><div class="sr-k">Category</div><div class="sr-v">GTM / Sales Engagement Software</div></div>
+            <div class="sr-row"><div class="sr-k">Sub-Category</div><div class="sr-v">Outbound Sales &amp; Engagement</div></div>
+            <div class="sr-row"><div class="sr-k">Stage</div><div class="sr-v">Early Growth</div></div>
+            <div class="sr-row"><div class="sr-k">HQ / Geography</div><div class="sr-v muted">Not specified</div></div>
+            <div class="sr-row"><div class="sr-k">Business Model</div><div class="sr-v">SaaS (subscription)</div></div>
+            <div class="sr-row"><div class="sr-k">Target Market</div><div class="sr-v">High-growth AI/tech startups</div></div>
+            <div class="sr-row"><div class="sr-k">Pricing</div><div class="sr-v">Low-to-mid-six figure enterprise contracts</div></div>
+            <div class="sr-row"><div class="sr-k">New Logos / Mo</div><div class="sr-v">~30–40</div></div>
+          </div>
+          <div>
+            <div class="sr-row"><div class="sr-k">Traction</div><div class="sr-v">Rapid revenue growth; 30–40 new customers/mo</div></div>
+            <div class="sr-row"><div class="sr-k">Key Customers</div><div class="sr-v">Cursor, Perplexity, Together AI, others</div></div>
+            <div class="sr-row"><div class="sr-k">Investors</div><div class="sr-v">Battery, OpenAI Startup Fund, Thrive, Emergence</div></div>
+            <div class="sr-row"><div class="sr-k">TAM</div><div class="sr-v">Large (GTM / Sales-tech)</div></div>
+            <div class="sr-row"><div class="sr-k">Differentiator</div><div class="sr-v">AI agents across data, signals, sequencing, deliverability</div></div>
+            <div class="sr-row"><div class="sr-k">Competitors</div><div class="sr-v">Clay, Apollo, Outreach, Salesloft, 6sense, Demandbase</div></div>
+            <div class="sr-row"><div class="sr-k">Source Type</div><div class="sr-v">Research notes</div></div>
+            <div class="sr-row"><div class="sr-k">Confidence</div><div class="sr-v">High</div></div>
+            <div class="sr-row"><div class="sr-k">Score</div><div class="sr-v yellow">78 / 100 (Attractive)</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DILIGENCE QUESTIONS PANEL ===== -->
+    <div class="tab-panel" data-panel="diligence">
+      <div class="panel-card">
+        <div class="dq-group">
+          <div class="dq-cat">Financials &amp; Unit Economics</div>
+          <div class="dq"><span class="qn">1</span>What is current ARR, and what is the trailing 12-month growth rate off the stated small base?</div>
+          <div class="dq"><span class="qn">2</span>What are net revenue retention and gross/logo churn by cohort?</div>
+          <div class="dq"><span class="qn">3</span>What are gross margins after factoring third-party data and AI inference costs?</div>
+        </div>
+        <div class="dq-group">
+          <div class="dq-cat">Customers &amp; Concentration</div>
+          <div class="dq"><span class="qn">4</span>How concentrated is revenue beyond the high-growth AI/tech startup cohort?</div>
+          <div class="dq"><span class="qn">5</span>What share of ARR sits in the top 10 accounts, and how durable is their spend in a downturn?</div>
+        </div>
+        <div class="dq-group">
+          <div class="dq-cat">Moat &amp; Competition</div>
+          <div class="dq"><span class="qn">6</span>How defensible is the agent layer as Clay and incumbents ship similar AI features?</div>
+          <div class="dq"><span class="qn">7</span>What is the deliverability/compliance exposure inherent to high-volume outbound?</div>
+        </div>
+        <div class="dq-group">
+          <div class="dq-cat">Financing &amp; Next Steps</div>
+          <div class="dq"><span class="qn">8</span>Is there any post-Series B financing planned, and what is the "next chapter" roadmap?</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RISKS &amp; MITIGANTS PANEL ===== -->
+    <div class="tab-panel" data-panel="risks">
+      <div class="panel-card">
+        <div class="rm">
+          <div class="rm-card">
+            <div class="rm-risk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Intense competition from Clay, Apollo, Outreach &amp; incumbents</div>
+            <div class="rm-mlabel">Mitigant</div>
+            <div class="rm-mit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg>Agent-native consolidation across the workflow raises switching costs vs. point tools.</div>
+          </div>
+          <div class="rm-card">
+            <div class="rm-risk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Customer concentration in high-growth AI/tech startups</div>
+            <div class="rm-mlabel">Mitigant</div>
+            <div class="rm-mit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg>Expansion into adjacent verticals and mid-market diversifies the buyer base over time.</div>
+          </div>
+          <div class="rm-card">
+            <div class="rm-risk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Deliverability &amp; compliance risk from high-volume outbound</div>
+            <div class="rm-mlabel">Mitigant</div>
+            <div class="rm-mit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg>Native deliverability tooling and sending governance can be a differentiated control layer.</div>
+          </div>
+          <div class="rm-card">
+            <div class="rm-risk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4.5M12 16h.01"/></svg>Unverified unit economics (NRR, gross margin, logo retention)</div>
+            <div class="rm-mlabel">Mitigant</div>
+            <div class="rm-mit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg>Resolve in diligence with a data-room review before sizing a position.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== EXPORT PANEL ===== -->
+    <div class="tab-panel" data-panel="export">
+      <div class="panel-card">
+        <div class="sr-head">
+          <h3>Export CRM-ready Data</h3>
+          <div class="view-all">Copy</div>
+        </div>
+        <div class="exp-row">
+          <span class="muted2" style="font-size:12.5px;">Format</span>
+          <div class="seg" id="expSeg">
+            <button class="on" data-fmt="json">JSON</button>
+            <button data-fmt="csv">CSV</button>
+            <button data-fmt="salesforce">Salesforce</button>
+          </div>
+        </div>
+        <div class="exp-pre" id="expPre"><span class="key">"company"</span>: "Unify",
+<span class="key">"category"</span>: "GTM / Sales Engagement Software",
+<span class="key">"stage"</span>: "Early Growth",
+<span class="key">"business_model"</span>: "SaaS (subscription)",
+<span class="key">"target_market"</span>: "High-growth AI/tech startups",
+<span class="key">"key_customers"</span>: ["Cursor", "Perplexity", "Together AI"],
+<span class="key">"investors"</span>: ["Battery", "OpenAI Startup Fund", "Thrive", "Emergence"],
+<span class="key">"score"</span>: 78,
+<span class="key">"rating"</span>: "Attractive",
+<span class="key">"confidence"</span>: "High"</div>
+        <button class="btn btn-primary btn-export">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+          Export to CRM
+        </button>
+      </div>
+    </div>
+
+    <!-- bottom banner -->
+    <div class="banner">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/><path d="M19.4 13a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      Review the results above, then explore structured fields, diligence questions, or export to your CRM.
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // Analysis tabs -> switch content panels
+  (function () {
+    var tabs = document.querySelectorAll('#analysisTabs .t');
+    var panels = document.querySelectorAll('.tab-panel');
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        tabs.forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        var name = tab.getAttribute('data-tab');
+        panels.forEach(function (p) {
+          p.classList.toggle('show', p.getAttribute('data-panel') === name);
+        });
+      });
+    });
+  })();
+
+  // Top nav tabs -> active state
+  (function () {
+    var navTabs = document.querySelectorAll('.nav .tab');
+    navTabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        navTabs.forEach(function (t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+      });
+    });
+  })();
+
+  // Workflow steps -> active state
+  (function () {
+    var steps = document.querySelectorAll('.sidebar .step');
+    steps.forEach(function (step) {
+      step.addEventListener('click', function () {
+        steps.forEach(function (s) { s.classList.remove('active'); });
+        step.classList.add('active');
+      });
+    });
+  })();
+
+  // Export format toggle + preview
+  (function () {
+    var seg = document.getElementById('expSeg');
+    var pre = document.getElementById('expPre');
+    if (!seg || !pre) return;
+    var data = {
+      json: '<span class="key">"company"</span>: "Unify",\n<span class="key">"category"</span>: "GTM / Sales Engagement Software",\n<span class="key">"stage"</span>: "Early Growth",\n<span class="key">"business_model"</span>: "SaaS (subscription)",\n<span class="key">"target_market"</span>: "High-growth AI/tech startups",\n<span class="key">"key_customers"</span>: ["Cursor", "Perplexity", "Together AI"],\n<span class="key">"investors"</span>: ["Battery", "OpenAI Startup Fund", "Thrive", "Emergence"],\n<span class="key">"score"</span>: 78,\n<span class="key">"rating"</span>: "Attractive",\n<span class="key">"confidence"</span>: "High"',
+      csv: 'company,category,stage,business_model,score,rating,confidence\nUnify,GTM / Sales Engagement Software,Early Growth,SaaS (subscription),78,Attractive,High',
+      salesforce: '<span class="key">Account.Name</span>        = "Unify"\n<span class="key">Account.Industry</span>    = "GTM / Sales-Tech"\n<span class="key">Account.Stage__c</span>    = "Early Growth"\n<span class="key">Account.Score__c</span>    = 78\n<span class="key">Account.Rating__c</span>   = "Attractive"\n<span class="key">Account.Source__c</span>   = "DealFlow AI"'
+    };
+    seg.querySelectorAll('button').forEach(function (b) {
+      b.addEventListener('click', function () {
+        seg.querySelectorAll('button').forEach(function (x) { x.classList.remove('on'); });
+        b.classList.add('on');
+        pre.innerHTML = data[b.getAttribute('data-fmt')];
+      });
+    });
+  })();
+
+  // Live character / word counter
+  (function () {
+    var area = document.querySelector('.notes-area');
+    var foot = document.querySelector('.notes-foot span');
+    if (!area || !foot) return;
+    function update() {
+      var text = area.value;
+      var chars = text.length.toLocaleString();
+      var words = (text.trim().match(/\S+/g) || []).length;
+      foot.textContent = chars + ' characters · ' + words + ' words';
+    }
+    area.addEventListener('input', update);
+  })();
+</script>
+</body>
+</html>
