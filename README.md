@@ -4,6 +4,10 @@ AI-powered private markets deal pipeline assistant that converts unstructured co
 
 The project is designed for teams that need a faster way to organize company information, evaluate opportunities, and generate diligence questions from messy source material.
 
+## Live Demo
+
+[Open DealFlow AI](https://ai-deal-pipeline-assistant-iaersbqy54j5dbbknbsui8.streamlit.app/)
+
 ## Project Overview
 
 Private markets teams often receive valuable company information through founder calls, investor updates, websites, funding announcements, research notes, emails, and internal memos. This information is usually unstructured, inconsistent, and difficult to compare across opportunities.
