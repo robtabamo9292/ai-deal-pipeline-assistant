@@ -546,24 +546,11 @@
     <div class="block">
       <div class="notes-head">
         <div class="field-label" style="margin:0;">Paste Company Notes</div>
-        <div class="tips">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>
-          Tips for best results
-        </div>
       </div>
       <div class="notes-box">
-        <textarea class="notes-area" spellcheck="false">Unify appears to be an early-to-growth-stage, AI-native GTM software company operating in the crowded outbound sales and sales-engagement category. The product consolidates functions that have historically been split across separate tools (data/enrichment, intent signals, sequencing, deliverability), with AI agents as the differentiator.
-
-Reported traction is strong for its stage: rapid revenue growth, low-to-mid-six figure enterprise contracts, ~30–40 new customers per month, and notable AI-startup logos (Cursor, Perplexity, Together AI) that signal product-market fit within the high-growth tech ecosystem.
-
-Potential investment signals include a large GTM/sales-tech TAM, fast revenue growth off a small base, top-tier customer logos, strong investor syndicate (Battery, OpenAI Startup Fund, Thrive, Emergence), and a credible "AI agent" wedge into an established category.
-
-Potential risks include intense competition from Clay, Apollo, Outreach, Salesloft, Amplemarket, Gong Engage, Instantly, Nooks, and incumbents like 6sense and Demandbase as Unify moves upstream into intent data. Additional concerns: customer concentration in a single buyer profile (high-growth AI/tech startups, which can churn or cut spend in a downturn), durability of the AI differentiation vs competitors add similar agent features, deliverability/compliance risk inherent to high-volume outbound, and early-stage metrics (NRR, gross margin, true ARR, logo retention) that remain unverified.
-
-Recommended next step:
-Treat as an early/growth-stage AI GTM software opportunity. Diligence should confirm current ARR and growth rate, net revenue retention and churn, gross margins (factoring data and inference costs), customer concentration beyond the AI-startup cohort, defensibility of the agent layer versus Clay and incumbents, and any post-Series B financing or "next chapter" development before sizing a position.</textarea>
+        <textarea class="notes-area" spellcheck="false"></textarea>
         <div class="notes-foot">
-          <span>2,148 characters · 380 words</span>
+          <span>0 / 300 words</span>
           <span class="expand">Expand editor
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
           </span>
@@ -864,18 +851,28 @@ Treat as an early/growth-stage AI GTM software opportunity. Diligence should con
     });
   })();
 
-  // Live character / word counter
+  // Live character counter with 300-character limit
   (function () {
     var area = document.querySelector('.notes-area');
     var foot = document.querySelector('.notes-foot span');
     if (!area || !foot) return;
+
+    var maxWords = 300;
+    area.removeAttribute('maxlength');
+
     function update() {
-      var text = area.value;
-      var chars = text.length.toLocaleString();
-      var words = (text.trim().match(/\S+/g) || []).length;
-      foot.textContent = chars + ' characters · ' + words + ' words';
+      if (area.value.length > maxChars) {
+        area.value = area.value.slice(0, maxChars);
+      }
+      foot.textContent = area.value.length + ' / ' + maxChars + ' characters';
     }
+
     area.addEventListener('input', update);
+    area.addEventListener('paste', function () {
+      setTimeout(update, 0);
+    });
+
+    update();
   })();
 </script>
 
@@ -1238,19 +1235,19 @@ Treat as an early/growth-stage AI GTM software opportunity. Diligence should con
 
   function buildExport(format) {
     const data = {
-      company: getField("Company Name", "Unify"),
-      category: getField("Category", "GTM / Sales Engagement Software"),
-      sub_category: getField("Sub-Category", "Outbound Sales & Engagement"),
-      stage: getField("Stage", "Early Growth"),
-      business_model: getField("Business Model", "SaaS subscription"),
-      target_market: getField("Target Market", "High-growth AI/tech startups"),
-      traction: getField("Traction", "Rapid revenue growth; customer logos referenced"),
-      key_customers: getField("Key Customers", "Cursor, Perplexity, Together AI, others"),
-      investors: getField("Investors", "Batter, OpenAI Startup Fund, Thrive, Emergence"),
-      differentiator: getField("Differentiator", "AI agents across data, signals, sequencing, deliverability"),
-      score: getField("Score", "78 / 100"),
-      rating: getField("Rating", "Attractive"),
-      confidence: getField("Confidence", "High")
+      company: getField("Company Name", ""),
+      category: getField("Category", ""),
+      sub_category: getField("Sub-Category", ""),
+      stage: getField("Stage", ""),
+      business_model: getField("Business Model", ""),
+      target_market: getField("Target Market", ""),
+      traction: getField("Traction", ""),
+      key_customers: getField("Key Customers", ""),
+      investors: getField("Investors", ""),
+      differentiator: getField("Differentiator", ""),
+      score: getField("Score", ""),
+      rating: getField("Rating", ""),
+      confidence: getField("Confidence", "")
     };
 
     if (format === "csv") {
@@ -1399,6 +1396,834 @@ Treat as an early/growth-stage AI GTM software opportunity. Diligence should con
 
   document.addEventListener("DOMContentLoaded", function () {
     setTimeout(wireExportFix, 200);
+  });
+})();
+</script>
+
+
+<script>
+/* CLEAN_START_EMPTY_UI_V1 */
+
+(function () {
+  function all(selector) {
+    return Array.from(document.querySelectorAll(selector));
+  }
+
+  function cleanText(el) {
+    return (el && el.textContent ? el.textContent : "").trim();
+  }
+
+  function isExact(el, value) {
+    return cleanText(el).toLowerCase() === value.toLowerCase();
+  }
+
+  function removeNotesTab() {
+    all("a, button, div, span").forEach(function (el) {
+      const txt = cleanText(el);
+      if (txt === "Notes" || txt === "▤ Notes" || txt === "▣ Notes") {
+        const target = el.closest("a, button, .top-tab, .nav-item") || el;
+        target.remove();
+      }
+    });
+  }
+
+  function removeLimitationsSection() {
+    const labels = all("div, span, p, h3, h4").filter(function (el) {
+      return isExact(el, "LIMITATIONS") || isExact(el, "Limitations");
+    });
+
+    labels.forEach(function (label) {
+      let next = label.nextElementSibling;
+
+      while (next) {
+        const txt = cleanText(next);
+        if (
+          txt === "ANALYSIS ENGINE" ||
+          txt === "Analysis Engine" ||
+          txt.includes("Agents SDK")
+        ) {
+          break;
+        }
+
+        const removeMe = next;
+        next = next.nextElementSibling;
+        removeMe.remove();
+      }
+
+      label.remove();
+    });
+  }
+
+  function setMetric(label, value, suffix) {
+    const card = all(".stat, .metric-card, .score-card, .card").find(function (node) {
+      return cleanText(node).includes(label);
+    });
+
+    if (!card) return;
+
+    const big = card.querySelector(".big");
+    const mid = card.querySelector(".mid");
+
+    if (big) {
+      big.innerHTML = value + (suffix || "");
+      return;
+    }
+
+    if (mid) {
+      mid.textContent = value;
+    }
+  }
+
+  function setExactText(oldValue, newValue) {
+    all("div, span, p, button, small").forEach(function (el) {
+      const txt = cleanText(el);
+
+      if (txt === oldValue || txt === "● " + oldValue) {
+        el.textContent = newValue;
+      }
+    });
+  }
+
+  function setStructuredRow(label, value) {
+    all(".sr-row, tr").forEach(function (row) {
+      const key = row.querySelector(".sr-k, td:first-child");
+      const val = row.querySelector(".sr-v, td:last-child");
+
+      if (key && val && cleanText(key) === label) {
+        val.textContent = value;
+      }
+    });
+  }
+
+  function panelWithHeading(title) {
+    const heading = all("h3, h4").find(function (node) {
+      return isExact(node, title);
+    });
+
+    if (!heading) return null;
+
+    return heading.closest(".panel-card") || heading.parentElement;
+  }
+
+  function setPanelEmptyList(title, kind) {
+    const panel = panelWithHeading(title);
+    if (!panel) return;
+
+    const list = panel.querySelector("ul");
+    if (!list) return;
+
+    const icon = kind === "risk" ? "!" : "✓";
+    const klass = kind === "risk" ? "warn" : "good";
+
+    list.innerHTML =
+      '<li><span class="' + klass + '">' + icon + '</span><span>No items extracted yet.</span></li>';
+  }
+
+  function setThesisEmpty() {
+    const panel = panelWithHeading("Investment Thesis");
+    if (!panel) return;
+
+    const p = panel.querySelector("p");
+    if (p) {
+      p.textContent = "Paste company notes, click Analyze Deal, and the investment thesis will appear here.";
+    }
+  }
+
+  function clearExportPreview() {
+    const panel = document.querySelector('[data-panel="export"]');
+    if (!panel) return;
+
+    const box =
+      panel.querySelector("pre") ||
+      panel.querySelector("code") ||
+      panel.querySelector("textarea") ||
+      panel.querySelector(".export-code") ||
+      panel.querySelector(".code-block") ||
+      panel.querySelector(".export-preview");
+
+    if (box) {
+      box.textContent = "";
+    }
+  }
+
+  function blankInitialState() {
+    removeNotesTab();
+    removeLimitationsSection();
+
+    all("input").forEach(function (input) {
+      if (input.type !== "radio" && input.type !== "checkbox") {
+        input.value = "";
+      }
+    });
+
+    all("textarea").forEach(function (area) {
+      area.value = "";
+    });
+
+    setMetric("Overall Score", "—", "<span> /100</span>");
+    setMetric("Investment Fit", "—", "");
+    setMetric("Deal Stage", "—", "");
+    setMetric("Confidence", "—", "");
+
+    setExactText("Analysis complete", "● Awaiting analysis");
+    setExactText("Attractive", "Paste notes first");
+    setExactText("Strong strategic fit", "Awaiting score");
+    setExactText("Scaling traction", "Awaiting analysis");
+    setExactText("Based on provided notes", "Awaiting analysis");
+
+    setThesisEmpty();
+
+    setPanelEmptyList("Key Upsides", "upside");
+    setPanelEmptyList("Key Risks", "risk");
+
+    [
+      "Company Name",
+      "Category",
+      "Sub-Category",
+      "Stage",
+      "HQ / Geography",
+      "Business Model",
+      "Target Market",
+      "Pricing",
+      "New Logos / Mo",
+      "Traction",
+      "Key Customers",
+      "Investors",
+      "TAM",
+      "Differentiator",
+      "Competitors",
+      "Source Type",
+      "Confidence",
+      "Score",
+      "Rating"
+    ].forEach(function (label) {
+      setStructuredRow(label, "—");
+    });
+
+    clearExportPreview();
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(blankInitialState, 80);
+  });
+})();
+</script>
+
+
+<script>
+/* EMPTY_PIPELINE_QUICKVIEW_V1 */
+
+(function () {
+  function cleanText(el) {
+    return (el && el.textContent ? el.textContent : "").trim();
+  }
+
+  function findQuickViewPanel() {
+    const headings = Array.from(document.querySelectorAll("div, span, p, h3, h4"));
+    const heading = headings.find(el => cleanText(el).toUpperCase() === "PIPELINE QUICK VIEW");
+
+    if (!heading) return null;
+
+    return heading.closest(".quick-view, .sidebar-card, .content-card, .panel-card, div") || heading.parentElement;
+  }
+
+  function emptyQuickView() {
+    const panel = findQuickViewPanel();
+    if (!panel) return;
+
+    const metricValues = Array.from(panel.querySelectorAll("div, span, p")).filter(el => {
+      const txt = cleanText(el);
+      return ["42", "7", "9", "5"].includes(txt);
+    });
+
+    metricValues.forEach(el => {
+      el.textContent = "—";
+    });
+
+    const openButton = Array.from(panel.querySelectorAll("button, a, div, span")).find(el =>
+      cleanText(el).includes("Open Pipeline")
+    );
+
+    if (openButton) {
+      openButton.style.opacity = "0.55";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(emptyQuickView, 120);
+  });
+})();
+</script>
+
+
+<script>
+/* EXACT_NOTES_FIX_V1 */
+
+(function () {
+  function setupExpandEditor() {
+    var area = document.querySelector('.notes-area');
+    var expand = document.querySelector('.expand');
+
+    if (!area || !expand) return;
+
+    expand.style.cursor = 'pointer';
+
+    expand.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+
+      var expanded = area.getAttribute('data-expanded') === 'true';
+
+      if (expanded) {
+        area.style.height = '';
+        area.style.minHeight = '';
+        area.setAttribute('data-expanded', 'false');
+        expand.innerHTML = 'Expand editor <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+      } else {
+        area.style.height = '720px';
+        area.style.minHeight = '720px';
+        area.setAttribute('data-expanded', 'true');
+        expand.innerHTML = 'Collapse editor <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>';
+      }
+    }, true);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(setupExpandEditor, 120);
+  });
+})();
+</script>
+
+
+<script>
+/* PIPELINE_COLLECTION_V1 */
+
+(function () {
+  var STORAGE_KEY = "dealflow_pipeline_records_v1";
+
+  function cleanText(el) {
+    return (el && el.textContent ? el.textContent : "").trim();
+  }
+
+  function escapeHtml(value) {
+    return String(value || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+  function csvEscape(value) {
+    var text = String(value || "");
+    if (text.includes(",") || text.includes('"') || text.includes("\n")) {
+      return '"' + text.replaceAll('"', '""') + '"';
+    }
+    return text;
+  }
+
+  function loadRecords() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveRecords(records) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }
+
+  function getTabs() {
+    return Array.from(document.querySelectorAll(".nav .tab"));
+  }
+
+  function getDealTab() {
+    return getTabs()[0] || null;
+  }
+
+  function getPipelineTab() {
+    return getTabs()[1] || null;
+  }
+
+  function hideNotesTab() {
+    var tabs = getTabs();
+    if (tabs[2]) tabs[2].style.display = "none";
+  }
+
+  function getWorkspaceGrid() {
+    var aside = document.querySelector("aside");
+    if (!aside || !aside.parentElement || aside.parentElement.tagName === "BODY") return null;
+    return aside.parentElement;
+  }
+
+  function getCompanyName() {
+    var inputs = Array.from(document.querySelectorAll("input.input"));
+    var companyInput = inputs[0];
+    var value = companyInput && companyInput.value ? companyInput.value.trim() : "";
+    return value || "Untitled Company";
+  }
+
+  function getNotesText() {
+    var area = document.querySelector(".notes-area");
+    return area && area.value ? area.value.trim() : "";
+  }
+
+  function getMetricCard(label) {
+    return Array.from(document.querySelectorAll(".stat")).find(function (card) {
+      return cleanText(card).includes(label);
+    });
+  }
+
+  function getMetric(label, fallback) {
+    var card = getMetricCard(label);
+    if (!card) return fallback;
+
+    var big = card.querySelector(".big");
+    var mid = card.querySelector(".mid");
+
+    if (big) return cleanText(big).replace(/\s+/g, " ") || fallback;
+    if (mid) return cleanText(mid).replace(/\s+/g, " ") || fallback;
+
+    return fallback;
+  }
+
+  function getStructuredRow(label, fallback) {
+    var rows = Array.from(document.querySelectorAll(".sr-row, tr"));
+
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var key = row.querySelector(".sr-k, td:first-child");
+      var val = row.querySelector(".sr-v, td:last-child");
+
+      if (key && val && cleanText(key) === label) {
+        var value = cleanText(val);
+        if (value && value !== "—") return value;
+      }
+    }
+
+    return fallback;
+  }
+
+  function normalizeScore(scoreText) {
+    var match = String(scoreText || "").match(/\d+/);
+    return match ? match[0] : "";
+  }
+
+  function buildRecord() {
+    var scoreText = getMetric("Overall Score", getStructuredRow("Score", "—"));
+    var score = normalizeScore(scoreText);
+
+    return {
+      company: getCompanyName(),
+      category: getStructuredRow("Category", "Not specified"),
+      sub_category: getStructuredRow("Sub-Category", "Not specified"),
+      stage: getMetric("Deal Stage", getStructuredRow("Stage", "Needs Review")).replace("Scaling traction", "").trim() || "Needs Review",
+      business_model: getStructuredRow("Business Model", "Not specified"),
+      target_market: getStructuredRow("Target Market", "Not specified"),
+      score: score ? score + " / 100" : "—",
+      confidence: getMetric("Confidence", getStructuredRow("Confidence", "Pending")).replace("Based on provided notes", "").trim() || "Pending",
+      traction: getStructuredRow("Traction", "Not specified"),
+      key_customers: getStructuredRow("Key Customers", "Not specified"),
+      investors: getStructuredRow("Investors", "Not specified"),
+      differentiator: getStructuredRow("Differentiator", "Not specified"),
+      created_at: new Date().toISOString()
+    };
+  }
+
+  function updateQuickView() {
+    var quick = document.querySelector(".quick");
+    if (!quick) return;
+
+    var records = loadRecords();
+    var values = quick.querySelectorAll(".v");
+    var scores = records
+      .map(function (r) { return parseInt(normalizeScore(r.score), 10); })
+      .filter(function (n) { return !isNaN(n); });
+
+    var highScore = scores.length ? Math.max.apply(null, scores) : null;
+
+    if (values[0]) values[0].textContent = records.length ? String(records.length) : "—";
+    if (values[1]) values[1].textContent = records.length ? String(records.length) : "—";
+    if (values[2]) values[2].textContent = highScore ? String(highScore) : "—";
+    if (values[3]) values[3].textContent = "—";
+  }
+
+  function recordsToCsv(records) {
+    var headers = [
+      "company",
+      "category",
+      "sub_category",
+      "stage",
+      "business_model",
+      "target_market",
+      "score",
+      "confidence",
+      "traction",
+      "key_customers",
+      "investors",
+      "differentiator",
+      "created_at"
+    ];
+
+    var rows = records.map(function (record) {
+      return headers.map(function (header) {
+        return csvEscape(record[header]);
+      }).join(",");
+    });
+
+    return headers.join(",") + "\n" + rows.join("\n");
+  }
+
+  function downloadPipelineCsv() {
+    var records = loadRecords();
+    var csv = recordsToCsv(records);
+
+    var blob = new Blob([csv], { type: "text/csv" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+
+    a.href = url;
+    a.download = "dealflow-pipeline.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function showToast(message) {
+    let toast = document.getElementById("df-toast");
+
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.id = "df-toast";
+      toast.style.position = "fixed";
+      toast.style.right = "22px";
+      toast.style.bottom = "22px";
+      toast.style.zIndex = "9999";
+      toast.style.padding = "12px 16px";
+      toast.style.borderRadius = "12px";
+      toast.style.background = "rgba(18,31,51,0.96)";
+      toast.style.border = "1px solid rgba(91,124,250,0.45)";
+      toast.style.boxShadow = "0 18px 40px rgba(0,0,0,0.35)";
+      toast.style.color = "#e7ecf6";
+      toast.style.fontSize = "13px";
+      toast.style.fontWeight = "700";
+      document.body.appendChild(toast);
+    }
+
+    toast.textContent = message;
+    toast.style.opacity = "1";
+
+    setTimeout(function () {
+      toast.style.opacity = "0";
+    }, 2200);
+  }
+
+  function addCurrentAnalysisToPipeline() {
+    var notes = getNotesText();
+
+    if (notes.length < 20) return;
+
+    var record = buildRecord();
+    var records = loadRecords();
+
+    records.push(record);
+    saveRecords(records);
+    updateQuickView();
+
+    showToast("Added to Pipeline.");
+  }
+
+  function renderPipelinePage() {
+    var grid = getWorkspaceGrid();
+    if (!grid) return;
+
+    var page = document.getElementById("df-pipeline-page");
+
+    if (!page) {
+      page = document.createElement("section");
+      page.id = "df-pipeline-page";
+      page.className = "df-pipeline-page";
+      grid.insertAdjacentElement("afterend", page);
+    }
+
+    var records = loadRecords();
+
+    var rows = records.map(function (record, index) {
+      return [
+        "<tr>",
+        "<td>" + (index + 1) + "</td>",
+        "<td>" + escapeHtml(record.company) + "</td>",
+        "<td>" + escapeHtml(record.category) + "</td>",
+        "<td>" + escapeHtml(record.stage) + "</td>",
+        "<td>" + escapeHtml(record.score) + "</td>",
+        "<td>" + escapeHtml(record.confidence) + "</td>",
+        "<td>" + escapeHtml(record.created_at ? new Date(record.created_at).toLocaleString() : "") + "</td>",
+        "</tr>"
+      ].join("");
+    }).join("");
+
+    if (!rows) {
+      rows = '<tr><td colspan="7" class="df-empty-row">No analyzed companies yet. Go to Deal Intake, paste notes, and click Analyze Deal.</td></tr>';
+    }
+
+    page.innerHTML = [
+      '<div class="df-pipeline-inner">',
+      '  <div class="df-pipeline-head">',
+      '    <div>',
+      '      <h2>Pipeline</h2>',
+      '      <p>Analyzed companies collected from Deal Intake.</p>',
+      '    </div>',
+      '    <button id="df-export-pipeline">Export Pipeline CSV</button>',
+      '  </div>',
+      '  <div class="df-pipeline-table-wrap">',
+      '    <table class="df-pipeline-table">',
+      '      <thead>',
+      '        <tr>',
+      '          <th>#</th>',
+      '          <th>Company</th>',
+      '          <th>Category</th>',
+      '          <th>Stage</th>',
+      '          <th>Score</th>',
+      '          <th>Confidence</th>',
+      '          <th>Added</th>',
+      '        </tr>',
+      '      </thead>',
+      '      <tbody>' + rows + '</tbody>',
+      '    </table>',
+      '  </div>',
+      '</div>'
+    ].join("");
+
+    document.getElementById("df-export-pipeline").addEventListener("click", downloadPipelineCsv);
+
+    grid.style.display = "none";
+    page.style.display = "block";
+
+    getTabs().forEach(function (tab) { tab.classList.remove("active"); });
+    var pipelineTab = getPipelineTab();
+    if (pipelineTab) pipelineTab.classList.add("active");
+  }
+
+  function showDealIntakePage() {
+    var grid = getWorkspaceGrid();
+    var page = document.getElementById("df-pipeline-page");
+
+    if (grid) grid.style.display = "";
+    if (page) page.style.display = "none";
+
+    getTabs().forEach(function (tab) { tab.classList.remove("active"); });
+    var dealTab = getDealTab();
+    if (dealTab) dealTab.classList.add("active");
+  }
+
+  function wirePipelineNavigation() {
+    var dealTab = getDealTab();
+    var pipelineTab = getPipelineTab();
+    var openPipeline = document.querySelector(".btn-quick");
+
+    if (dealTab) {
+      dealTab.style.cursor = "pointer";
+      dealTab.addEventListener("click", function (event) {
+        event.preventDefault();
+        showDealIntakePage();
+      }, true);
+    }
+
+    if (pipelineTab) {
+      pipelineTab.style.cursor = "pointer";
+      pipelineTab.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        renderPipelinePage();
+      }, true);
+    }
+
+    if (openPipeline) {
+      openPipeline.style.cursor = "pointer";
+      openPipeline.addEventListener("click", function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        renderPipelinePage();
+      }, true);
+    }
+  }
+
+  function wireAnalyzeCapture() {
+    var analyzeBtn = Array.from(document.querySelectorAll("button")).find(function (btn) {
+      return cleanText(btn).includes("Analyze Deal");
+    });
+
+    if (!analyzeBtn) return;
+
+    analyzeBtn.addEventListener("click", function () {
+      setTimeout(addCurrentAnalysisToPipeline, 500);
+    });
+  }
+
+  function injectPipelineStyles() {
+    var style = document.createElement("style");
+    style.textContent = `
+      .df-pipeline-page {
+        display: none;
+        min-height: calc(100vh - 88px);
+        padding: 48px 56px;
+        background: #070d1a;
+        color: #e7ecf6;
+        border-top: 1px solid #1d2940;
+      }
+
+      .df-pipeline-inner {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+
+      .df-pipeline-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+      }
+
+      .df-pipeline-head h2 {
+        margin: 0;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+
+      .df-pipeline-head p {
+        margin: 8px 0 0;
+        color: #98a2b3;
+      }
+
+      #df-export-pipeline {
+        background: #4f7cff;
+        color: white;
+        border: 0;
+        border-radius: 12px;
+        padding: 14px 18px;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 14px 32px rgba(79, 124, 255, 0.25);
+      }
+
+      .df-pipeline-table-wrap {
+        border: 1px solid #22304a;
+        border-radius: 18px;
+        overflow: hidden;
+        background: #081423;
+      }
+
+      .df-pipeline-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+
+      .df-pipeline-table th {
+        padding: 14px;
+        text-align: left;
+        color: #aeb8cc;
+        background: #101b31;
+        border-bottom: 1px solid #22304a;
+      }
+
+      .df-pipeline-table td {
+        padding: 14px;
+        border-top: 1px solid #22304a;
+        color: #e7ecf6;
+        vertical-align: top;
+      }
+
+      .df-empty-row {
+        text-align: center;
+        color: #98a2b3 !important;
+        padding: 28px !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    hideNotesTab();
+    injectPipelineStyles();
+    wirePipelineNavigation();
+    wireAnalyzeCapture();
+    updateQuickView();
+  });
+})();
+</script>
+
+
+<script>
+/* WORD_LIMIT_AND_PIPELINE_RESET_V1 */
+
+(function () {
+  var PIPELINE_KEY = "dealflow_pipeline_records_v1";
+  var MAX_WORDS = 300;
+
+  function cleanText(el) {
+    return (el && el.textContent ? el.textContent : "").trim();
+  }
+
+  function getWords(text) {
+    return (text || "").trim().match(/\S+/g) || [];
+  }
+
+  function limitToWords(text, maxWords) {
+    var words = getWords(text);
+    if (words.length <= maxWords) return text;
+    return words.slice(0, maxWords).join(" ");
+  }
+
+  function setup300WordLimit() {
+    var area = document.querySelector(".notes-area");
+    var counter = document.querySelector(".notes-foot span");
+
+    if (!area || !counter) return;
+
+    area.removeAttribute("maxlength");
+
+    function updateCounter() {
+      var words = getWords(area.value);
+
+      if (words.length > MAX_WORDS) {
+        area.value = limitToWords(area.value, MAX_WORDS);
+        words = getWords(area.value);
+      }
+
+      counter.textContent = words.length.toLocaleString() + " / " + MAX_WORDS.toLocaleString() + " words";
+    }
+
+    area.addEventListener("input", updateCounter, true);
+    area.addEventListener("paste", function () {
+      setTimeout(updateCounter, 0);
+    }, true);
+
+    updateCounter();
+  }
+
+  function resetPipelineOnFreshPageLoad() {
+    // Fresh page loads should start empty. Current session analysis will still collect into Pipeline.
+    localStorage.removeItem(PIPELINE_KEY);
+
+    var quick = document.querySelector(".quick");
+    if (!quick) return;
+
+    var values = quick.querySelectorAll(".v");
+    if (values[0]) values[0].textContent = "—";
+    if (values[1]) values[1].textContent = "—";
+    if (values[2]) values[2].textContent = "—";
+    if (values[3]) values[3].textContent = "—";
+  }
+
+  document.addEventListener("DOMContentLoaded", function () {
+    setTimeout(function () {
+      resetPipelineOnFreshPageLoad();
+      setup300WordLimit();
+    }, 250);
   });
 })();
 </script>
