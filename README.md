@@ -6,12 +6,6 @@ DealFlow AI is a deployed Streamlit app that converts unstructured company notes
 
 ---
 
-## Overview
-
-Investment and venture workflows often start with messy, unstructured notes from company websites, founder calls, funding announcements, research reports, or internal memos.
-
-DealFlow AI helps turn those notes into a structured diligence record. The app analyzes company notes and generates a cleaner investment view that can support early screening, research organization, and CRM pipeline preparation.
-
 ---
 
 ## Screenshots
