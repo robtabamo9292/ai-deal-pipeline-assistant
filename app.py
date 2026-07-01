@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 from src.agent_workflow import analyze_deal_with_agents
 from src.llm import analyze_deal_with_llm
 from src.export import create_pipeline_dataframe
-from src.sample_data import REAL_SAMPLE_DEALS
 
 
 load_dotenv()
@@ -17,14 +16,6 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
-
-def safe_text(value):
-    if value is None:
-        return "—"
-    if isinstance(value, list):
-        return "; ".join(str(v) for v in value if str(v).strip()) or "—"
-    return str(value).replace("$", "\\$") or "—"
 
 
 def inject_css():
@@ -39,96 +30,107 @@ def inject_css():
         }
 
         .stApp {
-            background: #070b16;
-            color: #e6edf7;
+            background: #060a16;
+            color: #e8eefc;
         }
 
         .block-container {
             padding-top: 1.25rem !important;
             padding-bottom: 2rem !important;
-            max-width: 1500px !important;
+            max-width: 1520px !important;
         }
 
         section[data-testid="stSidebar"] {
-            background: #080f1f;
+            background: #07101f;
             border-right: 1px solid rgba(105, 124, 170, 0.22);
         }
 
         h1, h2, h3, h4, h5, h6, p, label, span, div {
-            color: #e6edf7;
+            color: #e8eefc;
         }
 
         .muted {
-            color: #8f9bb3 !important;
-            font-size: 0.92rem;
+            color: #95a2ba !important;
+            font-size: 0.94rem;
         }
 
-        .brand-card {
-            background: linear-gradient(135deg, rgba(72, 101, 255, 0.18), rgba(15, 23, 42, 0.92));
+        .sidebar-brand {
+            background: linear-gradient(135deg, rgba(82, 111, 255, 0.18), rgba(10, 18, 35, 0.98));
             border: 1px solid rgba(100, 125, 255, 0.28);
             border-radius: 18px;
-            padding: 1.2rem 1.25rem;
+            padding: 1rem;
             margin-bottom: 1rem;
         }
 
-        .brand-title {
-            font-size: 1.25rem;
-            font-weight: 800;
+        .sidebar-title {
+            font-size: 1.18rem;
+            font-weight: 850;
             letter-spacing: -0.03em;
         }
 
-        .brand-sub {
+        .sidebar-sub {
             color: #95a2ba;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             margin-top: 0.15rem;
         }
 
-        .panel {
-            background: #091120;
-            border: 1px solid rgba(105, 124, 170, 0.24);
+        .section-card {
+            background: #081423;
+            border: 1px solid rgba(105, 124, 170, 0.25);
             border-radius: 18px;
             padding: 1.1rem 1.15rem;
-            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
             margin-bottom: 1rem;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.16);
         }
 
-        .panel-title {
-            font-size: 1.05rem;
-            font-weight: 800;
-            margin-bottom: 0.35rem;
+        .section-title {
+            font-size: 1.35rem;
+            font-weight: 850;
+            letter-spacing: -0.035em;
+            margin-bottom: 0.2rem;
         }
 
         .metric-card {
-            background: #0b1425;
+            background: #081423;
             border: 1px solid rgba(105, 124, 170, 0.25);
             border-radius: 16px;
             padding: 1rem;
-            min-height: 110px;
+            min-height: 112px;
         }
 
         .metric-label {
-            color: #8f9bb3 !important;
+            color: #95a2ba !important;
             font-size: 0.82rem;
             margin-bottom: 0.55rem;
         }
 
         .metric-value {
-            font-size: 1.7rem;
+            font-size: 1.55rem;
             font-weight: 850;
             letter-spacing: -0.04em;
+            line-height: 1.12;
         }
 
         .metric-sub {
             color: #2ee985 !important;
-            font-size: 0.82rem;
-            margin-top: 0.35rem;
+            font-size: 0.8rem;
+            margin-top: 0.45rem;
+        }
+
+        .small-label {
+            color: #a7b3ca !important;
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.45rem;
         }
 
         .stTextInput input, .stTextArea textarea {
-            background: #081423 !important;
-            color: #e6edf7 !important;
-            border: 1px solid rgba(105, 124, 170, 0.35) !important;
-            border-radius: 12px !important;
+            background: #071525 !important;
+            color: #e8eefc !important;
+            border: 1px solid rgba(105, 124, 170, 0.34) !important;
+            border-radius: 13px !important;
         }
 
         .stTextInput input:focus, .stTextArea textarea:focus {
@@ -137,13 +139,13 @@ def inject_css():
         }
 
         [data-baseweb="select"] > div {
-            background: #081423 !important;
-            border: 1px solid rgba(105, 124, 170, 0.35) !important;
-            border-radius: 12px !important;
-            color: #e6edf7 !important;
+            background: #071525 !important;
+            border: 1px solid rgba(105, 124, 170, 0.34) !important;
+            border-radius: 13px !important;
+            color: #e8eefc !important;
         }
 
-        div.stButton > button {
+        div.stButton > button, div.stDownloadButton > button {
             background: linear-gradient(135deg, #5577ff, #6c7cff) !important;
             color: white !important;
             border: 1px solid rgba(130, 150, 255, 0.5) !important;
@@ -152,17 +154,9 @@ def inject_css():
             min-height: 42px;
         }
 
-        div.stButton > button:hover {
+        div.stButton > button:hover, div.stDownloadButton > button:hover {
             transform: translateY(-1px);
-            border-color: rgba(170, 185, 255, 0.8) !important;
-        }
-
-        div[data-testid="stRadio"] label {
-            background: #0b1425;
-            border: 1px solid rgba(105, 124, 170, 0.28);
-            border-radius: 14px;
-            padding: 0.5rem 0.75rem;
-            margin-right: 0.5rem;
+            border-color: rgba(170, 185, 255, 0.85) !important;
         }
 
         .stTabs [data-baseweb="tab-list"] {
@@ -172,44 +166,12 @@ def inject_css():
 
         .stTabs [data-baseweb="tab"] {
             color: #9aa6bd !important;
-            font-weight: 700;
+            font-weight: 750;
         }
 
         .stTabs [aria-selected="true"] {
-            color: #e6edf7 !important;
+            color: #e8eefc !important;
             border-bottom: 2px solid #5577ff;
-        }
-
-        .dataframe {
-            background: #091120 !important;
-        }
-
-        .stDataFrame {
-            border: 1px solid rgba(105, 124, 170, 0.24);
-            border-radius: 14px;
-            overflow: hidden;
-        }
-
-        .small-pill {
-            display: inline-block;
-            padding: 0.25rem 0.55rem;
-            border-radius: 999px;
-            background: rgba(46, 233, 133, 0.12);
-            border: 1px solid rgba(46, 233, 133, 0.25);
-            color: #2ee985 !important;
-            font-size: 0.8rem;
-            font-weight: 700;
-        }
-
-        .warn-pill {
-            display: inline-block;
-            padding: 0.25rem 0.55rem;
-            border-radius: 999px;
-            background: rgba(255, 176, 32, 0.12);
-            border: 1px solid rgba(255, 176, 32, 0.28);
-            color: #ffb020 !important;
-            font-size: 0.8rem;
-            font-weight: 700;
         }
 
         hr {
@@ -221,7 +183,70 @@ def inject_css():
     )
 
 
-def scorecard_to_dataframe(scorecard):
+def clean_text(value, fallback="—"):
+    if value is None:
+        return fallback
+
+    if isinstance(value, list):
+        cleaned = [str(v).strip() for v in value if str(v).strip() and str(v).strip().lower() != "unknown"]
+        return "; ".join(cleaned) if cleaned else fallback
+
+    value = str(value).strip()
+    if not value or value.lower() == "unknown":
+        return fallback
+
+    return value.replace("$", "\\$")
+
+
+def clean_list(values):
+    if not values:
+        return []
+
+    cleaned = []
+    for value in values:
+        value = str(value).strip()
+        if value and value.lower() not in {"unknown", "none", "n/a", "not provided"}:
+            cleaned.append(value)
+
+    return cleaned
+
+
+def limit_words(text, max_words=350):
+    text = clean_text(text, "")
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+    return " ".join(words[:max_words]).rstrip() + "..."
+
+
+def fallback_risks(deal):
+    risks = clean_list(deal.risks)
+    if risks:
+        return risks
+
+    company = clean_text(deal.company_name, "The company")
+    sector = clean_text(deal.sector, "").lower()
+
+    inferred = [
+        f"{company} has incomplete evidence on revenue quality, retention, and repeatable customer acquisition.",
+        "Competitive positioning may be difficult to defend if incumbents or adjacent platforms can replicate the core workflow.",
+        "Unit economics are not fully proven without clear gross margin, CAC, payback period, pricing, and expansion data.",
+        "Growth may depend on continued access to reliable data, distribution, integrations, or partner channels.",
+    ]
+
+    if "data" in sector or "consumer" in sector:
+        inferred.insert(1, "Consumer data, privacy, consent, and compliance expectations could create regulatory or trust-related risk.")
+
+    if "health" in sector:
+        inferred.insert(1, "Healthcare compliance, implementation complexity, and integration with existing clinical systems could slow adoption.")
+
+    if "fintech" in sector or "finance" in sector:
+        inferred.insert(1, "Financial services compliance, trust, and enterprise procurement requirements could lengthen sales cycles.")
+
+    return inferred[:6]
+
+
+def scorecard_dataframe(scorecard):
     rows = []
     for item in scorecard or []:
         rows.append(
@@ -236,69 +261,40 @@ def scorecard_to_dataframe(scorecard):
     return pd.DataFrame(rows)
 
 
-def render_metric_cards(deal):
-    col1, col2, col3, col4 = st.columns(4)
+def render_metrics(deal):
+    c1, c2, c3, c4 = st.columns(4)
 
-    with col1:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-              <div class="metric-label">Overall Score</div>
-              <div class="metric-value">{deal.opportunity_score} /100</div>
-              <div class="metric-sub">Analysis complete</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    cards = [
+        ("Overall Score", f"{deal.opportunity_score} /100", "Analysis complete"),
+        ("Investment Fit", clean_text(deal.priority), "Review diligence"),
+        ("Deal Stage", clean_text(deal.stage), "Based on notes"),
+        ("Confidence", str(deal.confidence_score), "Evidence quality"),
+    ]
 
-    with col2:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-              <div class="metric-label">Investment Fit</div>
-              <div class="metric-value">{safe_text(deal.priority)}</div>
-              <div class="metric-sub">Review diligence items</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col3:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-              <div class="metric-label">Deal Stage</div>
-              <div class="metric-value">{safe_text(deal.stage)}</div>
-              <div class="metric-sub">Based on notes</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with col4:
-        st.markdown(
-            f"""
-            <div class="metric-card">
-              <div class="metric-label">Confidence</div>
-              <div class="metric-value">{deal.confidence_score}</div>
-              <div class="metric-sub">Evidence quality</div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    for col, (label, value, sub) in zip([c1, c2, c3, c4], cards):
+        with col:
+            st.markdown(
+                f"""
+                <div class="metric-card">
+                  <div class="metric-label">{label}</div>
+                  <div class="metric-value">{value}</div>
+                  <div class="metric-sub">{sub}</div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
 
 
 def render_empty_results():
-    col1, col2, col3, col4 = st.columns(4)
-
-    empty_cards = [
+    c1, c2, c3, c4 = st.columns(4)
+    cards = [
         ("Overall Score", "— /100", "Paste notes first"),
         ("Investment Fit", "—", "Awaiting score"),
         ("Deal Stage", "—", "Awaiting analysis"),
         ("Confidence", "—", "Awaiting analysis"),
     ]
 
-    for col, (label, value, sub) in zip([col1, col2, col3, col4], empty_cards):
+    for col, (label, value, sub) in zip([c1, c2, c3, c4], cards):
         with col:
             st.markdown(
                 f"""
@@ -313,119 +309,139 @@ def render_empty_results():
 
     st.markdown(
         """
-        <div class="panel">
-          <div class="panel-title">Investment Thesis</div>
-          <p class="muted">Paste company notes, click Analyze Deal, and the investment thesis will appear here.</p>
+        <div class="section-card">
+          <div class="section-title">Investment Thesis</div>
+          <p class="muted">Paste company notes and click Analyze Deal to generate a thesis, risks, diligence questions, and CRM-ready pipeline record.</p>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
 
-def render_deal_result(deal):
-    render_metric_cards(deal)
+def render_result(deal):
+    render_metrics(deal)
 
     tab_summary, tab_fields, tab_scorecard, tab_risks, tab_export = st.tabs(
         ["Executive Summary", "Structured Fields", "Diligence Scorecard", "Risks & Questions", "Export Preview"]
     )
 
     with tab_summary:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
         st.markdown("### Investment Thesis")
-        st.write(safe_text(deal.description))
+        st.write(limit_words(deal.description, 350))
         st.markdown("---")
         st.markdown("### Recommended Next Step")
-        st.write(safe_text(deal.recommended_next_step))
+        st.write(clean_text(deal.recommended_next_step))
         st.markdown("</div>", unsafe_allow_html=True)
 
         left, right = st.columns(2)
 
         with left:
-            st.markdown('<div class="panel">', unsafe_allow_html=True)
+            st.markdown('<div class="section-card">', unsafe_allow_html=True)
             st.markdown("### Key Upsides / Traction")
-            if deal.traction_signals:
-                for item in deal.traction_signals:
-                    st.markdown(f"- {safe_text(item)}")
+            upsides = clean_list(deal.traction_signals)
+            if upsides:
+                for item in upsides:
+                    st.markdown(f"- {clean_text(item)}")
             else:
-                st.write("No traction signals extracted.")
+                st.markdown("- Not enough traction evidence was provided.")
             st.markdown("</div>", unsafe_allow_html=True)
 
         with right:
-            st.markdown('<div class="panel">', unsafe_allow_html=True)
+            st.markdown('<div class="section-card">', unsafe_allow_html=True)
             st.markdown("### Key Risks")
-            if deal.risks:
-                for item in deal.risks:
-                    st.markdown(f"- {safe_text(item)}")
-            else:
-                st.write("No risks extracted.")
+            for risk in fallback_risks(deal):
+                st.markdown(f"- {clean_text(risk)}")
             st.markdown("</div>", unsafe_allow_html=True)
 
     with tab_fields:
-        field_rows = {
+        fields = {
             "Company Name": deal.company_name,
             "Sector": deal.sector,
             "Subsector": deal.subsector,
             "Business Model": deal.business_model,
             "Stage": deal.stage,
-            "Source Context": deal.relationship_context,
             "Priority": deal.priority,
             "Opportunity Score": deal.opportunity_score,
             "Confidence Score": deal.confidence_score,
-            "CRM Tags": safe_text(deal.crm_tags),
+            "Source Context": deal.relationship_context,
+            "CRM Tags": clean_text(deal.crm_tags),
         }
-        st.dataframe(pd.DataFrame(field_rows.items(), columns=["Field", "Value"]), use_container_width=True)
+        st.dataframe(pd.DataFrame(fields.items(), columns=["Field", "Value"]), use_container_width=True)
 
     with tab_scorecard:
-        df = scorecard_to_dataframe(deal.diligence_scorecard)
-        if not df.empty:
-            st.dataframe(df, use_container_width=True)
-        else:
+        df = scorecard_dataframe(deal.diligence_scorecard)
+        if df.empty:
             st.info("No scorecard generated.")
+        else:
+            st.dataframe(df, use_container_width=True)
 
     with tab_risks:
-        col_risk, col_questions = st.columns(2)
+        col1, col2 = st.columns(2)
 
-        with col_risk:
-            st.markdown('<div class="panel">', unsafe_allow_html=True)
-            st.markdown("### Risks")
-            if deal.risks:
-                for risk in deal.risks:
-                    st.markdown(f"- {safe_text(risk)}")
-            else:
-                st.write("No risks extracted.")
+        with col1:
+            st.markdown('<div class="section-card">', unsafe_allow_html=True)
+            st.markdown("### Investment Risks")
+            for risk in fallback_risks(deal):
+                st.markdown(f"- {clean_text(risk)}")
             st.markdown("</div>", unsafe_allow_html=True)
 
-        with col_questions:
-            st.markdown('<div class="panel">', unsafe_allow_html=True)
-            st.markdown("### Priority Diligence Questions")
-            if deal.diligence_questions:
-                for question in deal.diligence_questions:
-                    st.markdown(f"- {safe_text(question)}")
+        with col2:
+            st.markdown('<div class="section-card">', unsafe_allow_html=True)
+            st.markdown("### Diligence Questions")
+            questions = clean_list(deal.diligence_questions)
+            if questions:
+                for q in questions:
+                    st.markdown(f"- {clean_text(q)}")
             else:
-                st.write("No diligence questions generated.")
+                st.markdown("- What evidence supports revenue quality, retention, customer demand, and defensibility?")
+                st.markdown("- What are the largest risks to adoption, margins, and competitive positioning?")
             st.markdown("</div>", unsafe_allow_html=True)
 
     with tab_export:
-        preview_df = create_pipeline_dataframe([deal])
-        st.dataframe(preview_df, use_container_width=True)
-        csv = preview_df.to_csv(index=False).encode("utf-8")
+        preview = create_pipeline_dataframe([deal])
+        st.dataframe(preview, use_container_width=True)
         st.download_button(
             "Download This Deal CSV",
-            data=csv,
-            file_name=f"{deal.company_name.replace(' ', '_').lower()}_deal_record.csv",
+            data=preview.to_csv(index=False).encode("utf-8"),
+            file_name=f"{clean_text(deal.company_name, 'deal').replace(' ', '_').lower()}_deal_record.csv",
             mime="text/csv",
         )
 
 
 def clear_workspace():
-    for key in [
-        "company_name",
-        "custom_notes",
-        "investment_focus",
-        "latest_deal",
-    ]:
-        if key in st.session_state:
-            del st.session_state[key]
+    st.session_state["company_name"] = ""
+    st.session_state["source_type"] = "Research notes"
+    st.session_state["investment_focus"] = ""
+    st.session_state["company_notes"] = ""
+    st.session_state["latest_deal"] = None
+    st.session_state["analysis_complete"] = False
+
+
+def clear_pipeline():
+    st.session_state["deals"] = []
+    clear_workspace()
+
+
+def analyze_current_deal(company_name, source_type, investment_focus, company_notes):
+    raw_notes = f"""
+Company name: {company_name}
+Source type: {source_type}
+Investment focus: {investment_focus}
+
+Company notes:
+{company_notes}
+""".strip()
+
+    with st.spinner("Analyzing deal notes and generating diligence record..."):
+        try:
+            deal = analyze_deal_with_agents(raw_notes)
+        except Exception:
+            deal = analyze_deal_with_llm(raw_notes)
+
+    st.session_state.latest_deal = deal
+    st.session_state.deals.append(deal)
+    st.session_state.analysis_complete = True
 
 
 inject_css()
@@ -436,182 +452,110 @@ if "deals" not in st.session_state:
 with st.sidebar:
     st.markdown(
         """
-        <div class="brand-card">
-          <div class="brand-title">💎 DealFlow AI</div>
-          <div class="brand-sub">AI Deal Pipeline Assistant</div>
+        <div class="sidebar-brand">
+          <div class="sidebar-title">💎 DealFlow AI</div>
+          <div class="sidebar-sub">AI Deal Pipeline Assistant</div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    st.markdown("### Product Context")
+    st.markdown('<div class="small-label">Workflow</div>', unsafe_allow_html=True)
     st.markdown(
         """
-        <span class="muted">Workflow</span>
-
-        1. Paste deal notes  
+        1. Paste company notes  
         2. Extract structured fields  
         3. Score opportunity  
         4. Generate diligence questions  
         5. Export CRM-ready data  
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
     st.markdown("---")
 
-    analysis_engine = st.selectbox(
-        "Analysis Engine",
-        ["Agents SDK v2", "OpenAI API v1"],
-        index=0,
-    )
+    st.markdown('<div class="small-label">Pipeline Quick View</div>', unsafe_allow_html=True)
+    total = len(st.session_state.deals)
+    high_score = len([d for d in st.session_state.deals if d.opportunity_score >= 75])
+    st.markdown(f"**Total Deals:** {total}")
+    st.markdown(f"**High Score:** {high_score if total else '—'}")
 
     st.markdown("---")
 
-    if st.button("Clear Workspace", use_container_width=True):
-        clear_workspace()
-        st.rerun()
-
-    if st.button("Clear Pipeline", use_container_width=True):
-        st.session_state.deals = []
-        st.success("Pipeline cleared.")
-
-    st.markdown("---")
-    st.markdown(f"**Total Deals:** {len(st.session_state.deals)}")
-
-    if st.session_state.deals:
-        high_scores = [d for d in st.session_state.deals if d.opportunity_score >= 75]
-        st.markdown(f"**High Score:** {len(high_scores)}")
-    else:
-        st.markdown("**High Score:** —")
+    st.button("Clear Workspace", use_container_width=True, on_click=clear_workspace)
+    st.button("Clear Pipeline", use_container_width=True, on_click=clear_pipeline)
 
 
-st.markdown(
-    """
-    <div class="brand-card">
-      <div class="brand-title">DealFlow AI — Analyst Workspace</div>
-      <div class="brand-sub">Convert unstructured company notes into structured diligence, scoring, risks, and CRM-ready pipeline records.</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+tab_deal, tab_pipeline = st.tabs(["Deal Intake", "Pipeline"])
 
-page_deal, page_pipeline, page_notes = st.tabs(
-    ["Deal Intake", "Pipeline", "Evaluation Notes"]
-)
-
-with page_deal:
-    left, right = st.columns([0.44, 0.56], gap="large")
+with tab_deal:
+    left, right = st.columns([0.42, 0.58], gap="large")
 
     with left:
-        st.markdown('<div class="panel">', unsafe_allow_html=True)
-        st.markdown("## 1. Deal Intake")
-        st.markdown('<p class="muted">Paste unstructured notes and provide basic context.</p>', unsafe_allow_html=True)
+        st.markdown('<div class="section-card">', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">1. Deal Intake</div>', unsafe_allow_html=True)
+        st.markdown('<p class="muted">Paste unstructured company notes and generate a structured diligence record.</p>', unsafe_allow_html=True)
 
-        mode = st.radio(
-            "Analysis Mode",
-            ["Sample Company Demo", "Custom Company Analysis"],
-            horizontal=True,
-            key="analysis_mode",
+        company_name = st.text_input(
+            "Company Name",
+            key="company_name",
+            placeholder="Example: Pogo, Ramp, Rippling, Canva",
         )
 
-        if mode == "Sample Company Demo":
-            sample_choice = st.selectbox(
-                "Sample Company",
-                list(REAL_SAMPLE_DEALS.keys()),
-                key="sample_choice",
-            )
-            company_name = sample_choice
-            source_type = "Sample demo"
-            investment_focus = "Demo analysis"
-            raw_notes = st.text_area(
-                "Paste Company Notes",
-                value=REAL_SAMPLE_DEALS[sample_choice],
-                height=330,
-                key="sample_notes",
-            )
-        else:
-            company_name = st.text_input(
-                "Company Name",
-                key="company_name",
-                placeholder="Example: Corgi Insurance, Stripe, Rippling, Canva",
-            )
+        source_type = st.selectbox(
+            "Source Type",
+            ["Research notes", "Company website text", "Funding announcement", "Founder call notes", "Investor update", "Other"],
+            key="source_type",
+        )
 
-            source_type = st.selectbox(
-                "Source Type",
-                [
-                    "Research notes",
-                    "Company website text",
-                    "Funding announcement",
-                    "Investor update",
-                    "Founder call notes",
-                    "Other",
-                ],
-                key="source_type",
-            )
+        investment_focus = st.text_input(
+            "Optional Investment Focus",
+            key="investment_focus",
+            placeholder="e.g. B2B SaaS, fintech infrastructure, healthcare workflow automation",
+        )
 
-            investment_focus = st.text_input(
-                "Optional Investment Focus",
-                key="investment_focus",
-                placeholder="e.g. InsurTech, B2B SaaS, AI workflow automation",
-            )
+        company_notes = st.text_area(
+            "Paste Company Notes",
+            key="company_notes",
+            height=360,
+            placeholder="Paste company description, traction, customers, business model, funding context, competitors, risks, or investment rationale.",
+        )
 
-            custom_notes = st.text_area(
-                "Paste Company Notes",
-                key="custom_notes",
-                height=330,
-                placeholder="Paste company description, traction, customers, funding context, risks, competitors, or investment rationale here.",
-            )
-
-            raw_notes = f"""
-Company name: {company_name}
-Source type: {source_type}
-Investment focus: {investment_focus}
-
-Company notes:
-{custom_notes}
-""".strip()
-
-        analyze_clicked = st.button("Analyze Deal", use_container_width=True)
-
-        if analyze_clicked:
-            if len(raw_notes.strip()) < 100:
+        if st.button("Analyze Deal", use_container_width=True):
+            if len(company_notes.strip()) < 100:
                 st.warning("Please provide more company context before analyzing.")
             else:
                 try:
-                    with st.spinner("Analyzing deal notes and generating diligence record..."):
-                        if analysis_engine == "Agents SDK v2":
-                            deal = analyze_deal_with_agents(raw_notes)
-                        else:
-                            deal = analyze_deal_with_llm(raw_notes)
-
-                    st.session_state.latest_deal = deal
-                    st.session_state.deals.append(deal)
-                    st.success("Analysis complete.")
-
+                    analyze_current_deal(company_name, source_type, investment_focus, company_notes)
+                    st.rerun()
                 except Exception as exc:
                     st.error(f"Error analyzing deal: {exc}")
+
+        if st.session_state.get("analysis_complete"):
+            st.success("Analysis complete.")
+            st.session_state.analysis_complete = False
 
         st.markdown("</div>", unsafe_allow_html=True)
 
     with right:
-        st.markdown("## 2. Live Analysis & Results")
-        st.markdown('<p class="muted">Real backend analysis and structured output based on your notes.</p>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title">2. Live Analysis & Results</div>', unsafe_allow_html=True)
+        st.markdown('<p class="muted">Backend-generated thesis, scoring, risks, diligence questions, and export-ready pipeline output.</p>', unsafe_allow_html=True)
 
-        latest_deal = st.session_state.get("latest_deal")
-        if latest_deal is None:
+        latest = st.session_state.get("latest_deal")
+        if latest is None:
             render_empty_results()
         else:
-            render_deal_result(latest_deal)
+            render_result(latest)
 
-with page_pipeline:
-    st.markdown("## Pipeline")
+with tab_pipeline:
+    st.markdown('<div class="section-title">Pipeline</div>', unsafe_allow_html=True)
     st.markdown('<p class="muted">Analyzed deals saved in this session and exportable as CRM-ready data.</p>', unsafe_allow_html=True)
 
-    if st.session_state.deals:
-        pipeline_df = create_pipeline_dataframe(st.session_state.deals)
+    if not st.session_state.deals:
+        st.info("No analyzed companies yet. Go to Deal Intake, paste notes, and click Analyze Deal.")
+    else:
+        df = create_pipeline_dataframe(st.session_state.deals)
 
-        display_columns = [
+        display_cols = [
             "company_name",
             "sector",
             "stage",
@@ -619,45 +563,19 @@ with page_pipeline:
             "priority",
             "confidence_score",
             "recommended_next_step",
-            "crm_tags",
+            "risks",
+            "diligence_questions",
         ]
 
-        cols = [col for col in display_columns if col in pipeline_df.columns]
-        st.dataframe(pipeline_df[cols], use_container_width=True)
+        display_cols = [c for c in display_cols if c in df.columns]
+        st.dataframe(df[display_cols], use_container_width=True)
 
         with st.expander("Full export preview"):
-            st.dataframe(pipeline_df, use_container_width=True)
-
-        csv = pipeline_df.to_csv(index=False).encode("utf-8")
+            st.dataframe(df, use_container_width=True)
 
         st.download_button(
             "Download CRM-Ready CSV",
-            data=csv,
+            data=df.to_csv(index=False).encode("utf-8"),
             file_name="dealflow_pipeline_export.csv",
             mime="text/csv",
         )
-    else:
-        st.info("No analyzed companies yet. Go to Deal Intake, paste notes, and click Analyze Deal.")
-
-with page_notes:
-    st.markdown("## Evaluation / Product Notes")
-
-    st.markdown(
-        """
-        <div class="panel">
-        <h3>Current backend-connected capabilities</h3>
-
-        <ul>
-          <li>Runs real backend analysis through Agents SDK v2 or OpenAI API v1</li>
-          <li>Produces a structured DealRecord</li>
-          <li>Applies VC-style scoring and confidence scoring</li>
-          <li>Saves analyzed deals into session pipeline</li>
-          <li>Builds a CRM-ready pipeline table</li>
-          <li>Exports pipeline data to CSV</li>
-        </ul>
-
-        <p class="muted">This version prioritizes working product behavior over the fragile iframe button bridge.</p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
