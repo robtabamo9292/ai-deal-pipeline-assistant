@@ -177,7 +177,18 @@ def inject_css():
         hr {
             border-color: rgba(105, 124, 170, 0.22);
         }
-        </style>
+        
+    .section-card:empty {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: 0 !important;
+        background: transparent !important;
+    }
+
+    </style>
         """,
         unsafe_allow_html=True,
     )
