@@ -188,6 +188,12 @@ def inject_css():
         background: transparent !important;
     }
 
+    
+    /* Final alignment: lower only the Live Analysis heading */
+    .live-analysis-title-align {
+        margin-top: 1.15rem !important;
+    }
+
     </style>
         """,
         unsafe_allow_html=True,
@@ -548,7 +554,7 @@ with tab_deal:
         st.markdown("</div>", unsafe_allow_html=True)
 
     with right:
-        st.markdown('<div class="section-title">2. Live Analysis & Results</div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-title live-analysis-title-align">2. Live Analysis & Results</div>', unsafe_allow_html=True)
         st.markdown('<p class="muted">Backend-generated thesis, scoring, risks, diligence questions, and export-ready pipeline output.</p>', unsafe_allow_html=True)
 
         latest = st.session_state.get("latest_deal")
