@@ -1,62 +1,144 @@
 # DealFlow AI — AI Deal Pipeline Assistant
 
-AI-powered private markets deal pipeline assistant that converts unstructured company, founder, and research notes into structured, CRM-ready diligence records.
+DealFlow AI is a deployed Streamlit app that converts unstructured company notes into structured investment analysis, opportunity scoring, inferred risks, diligence questions, and CRM-ready pipeline exports.
 
-The project is designed for teams that need a faster way to organize company information, evaluate opportunities, and generate diligence questions from messy source material.
+**Live Demo:** Private Streamlit Cloud app available upon request.
 
-## Live Demo
+---
 
-[Open DealFlow AI](https://ai-deal-pipeline-assistant-iaersbqy54j5dbbknbsui8.streamlit.app/)
+## Overview
 
-## Project Overview
+Investment and venture workflows often start with messy, unstructured notes from company websites, founder calls, funding announcements, research reports, or internal memos.
 
-Private markets teams often receive valuable company information through founder calls, investor updates, websites, funding announcements, research notes, emails, and internal memos. This information is usually unstructured, inconsistent, and difficult to compare across opportunities.
+DealFlow AI helps turn those notes into a structured diligence record. The app analyzes company notes and generates a cleaner investment view that can support early screening, research organization, and CRM pipeline preparation.
 
-DealFlow AI solves this by taking raw company notes and generating a structured deal record that includes company profile, sector, business model, stage, traction signals, customer segments, funding signals, risks, recommended next steps, and priority diligence questions.
+---
 
-The app also includes a diligence scorecard that evaluates opportunities across key categories such as founder/team fit, market opportunity, product differentiation, traction, customer clarity, business model, go-to-market scalability, competitive positioning, and risk/compliance.
+## Screenshots
+
+### Investment Thesis & Summary
+
+![Investment Summary](assets/screenshots/analysis-summary.png)
+
+### Risks & Questions
+
+![Risks and Questions](assets/screenshots/risks-questions.png)
+
+---
 
 ## Key Features
 
-* Converts unstructured company notes into structured deal records
-* Supports both sample company demos and custom company analysis
-* Generates CRM-ready fields for pipeline tracking
-* Produces a due diligence scorecard with category-level scoring
-* Identifies traction, customer, funding, and risk signals
-* Generates priority diligence questions for follow-up research
-* Exports analyzed opportunities into a downloadable CSV
-* Includes guardrails to avoid unsupported claims and flag missing information
+- Deal intake for unstructured company notes
+- AI-generated investment thesis
+- Structured company fields
+- Opportunity score and confidence score
+- Priority rating
+- Inferred risks
+- Diligence questions
+- Session-based pipeline tracking
+- CRM-ready CSV export
+
+---
+
+## Example Use Case
+
+A user pastes notes about a private company into the app. DealFlow AI returns a structured investment record with thesis, risks, diligence questions, scores, and exportable pipeline data.
+
+This can support workflows such as venture sourcing, startup research, private market screening, CRM pipeline preparation, initial investment memo drafting, and analyst workflow automation.
+
+---
 
 ## Tech Stack
 
-* **Python** — Core application logic
-* **Streamlit** — Interactive web app interface
-* **OpenAI API** — LLM-powered company analysis and structured extraction
-* **Pandas** — Pipeline table creation and CSV export
-* **python-dotenv** — Local environment variable management
-* **Git / GitHub** — Version control and project hosting
+- Python
+- Streamlit
+- OpenAI API
+- OpenAI Agents SDK
+- Pandas
+- Pydantic
+- python-dotenv
 
-## Intended Use Case
+---
 
-DealFlow AI is intended as a workflow prototype for sourcing, diligence, and pipeline management. It demonstrates how AI can help private markets and venture teams standardize company information, prioritize opportunities, and prepare more focused diligence workflows.
+## Local Setup
 
-NFA
+Clone the repository:
 
-
-## OpenAI Agents SDK v2 Upgrade
-
-Included experimental OpenAI Agents SDK workflow.
-
-The original version used a direct OpenAI API call to convert unstructured deal notes into structured diligence records. The v2 workflow adds an agent-based analysis path using the OpenAI Agents SDK.
-
-New capabilities include:
-
-- Agents SDK analysis engine option in the sidebar
-- Dedicated DealFlow Analyst Agent
-- Tool calling through a note-quality assessment tool
-- Structured output using the existing DealRecord schema
-- Reuse of deterministic scorecard logic
-- Fallback behavior when no API key is available
-- Foundation for future multi-agent diligence workflows
+```bash
+git clone https://github.com/robtabamo9292/ai-deal-pipeline-assistant.git
+cd ai-deal-pipeline-assistant
+```
 
 
+
+Create and activate a virtual environment:
+
+
+
+```bash
+
+python -m venv .venv
+
+source .venv/bin/activate
+
+```
+
+
+
+Install dependencies:
+
+
+
+```bash
+
+pip install -r requirements.txt
+
+```
+
+
+
+Create a `.env` file:
+
+
+
+```bash
+
+OPENAI_API_KEY=your_api_key_here
+
+```
+
+
+
+Run the app:
+
+
+
+```bash
+
+python -m streamlit run app.py
+
+```
+
+
+
+---
+
+
+
+## Notes on AI Output
+
+
+
+DealFlow AI is designed to assist with early-stage research and diligence organization. It does not replace investment judgment. Outputs should be reviewed, verified, and supplemented with primary source diligence, financial data, customer references, and market research.
+
+
+
+---
+
+
+
+## Project Status
+
+
+
+The app is deployed and functional. Current capabilities include deal intake, AI-generated analysis, risk inference, scorecard generation, pipeline tracking, and CSV export.
