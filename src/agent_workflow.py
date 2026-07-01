@@ -95,7 +95,7 @@ dealflow_agent = Agent(
     Return a valid DealRecord object.
 
     """,
-    tools=[assess_note_quality],
+    tools=[],
     output_type=DealRecord,
 )
 
@@ -120,6 +120,16 @@ def analyze_deal_with_agents(raw_notes: str) -> DealRecord:
 
     prompt = f"""
     Analyze the following deal notes and produce a structured DealRecord.
+
+    Important output requirements:
+    - The description field should be a high-level investment thesis, not just a company summary.
+    - The investment thesis must explain what the company does, why it could be attractive, what must be true for the opportunity to work, and the main diligence concerns.
+    - Keep the investment thesis under 350 words.
+    - The risks field must contain 4 to 7 specific investment risks.
+    - Do not use "Unknown" as a risk. If risks are not explicitly stated, infer likely risks from the sector, business model, customer profile, competition, data quality, GTM model, regulation, valuation, and missing metrics.
+    - Diligence questions should directly investigate the biggest uncertainties and risks.
+    - The recommended_next_step should be specific, action-oriented, and tied to the next diligence step.
+    - CRM tags should be concise and useful for a deal pipeline.
 
     Deal notes:
     {raw_notes}
