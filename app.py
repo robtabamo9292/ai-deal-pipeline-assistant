@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from src.agent_workflow import analyze_deal_with_agents
 from src.llm import analyze_deal_with_llm
 from src.export import create_pipeline_dataframe
+from src.memo import generate_investment_memo
+from src.memo_pdf import memo_to_pdf_bytes
 
 
 load_dotenv()
@@ -177,24 +179,23 @@ def inject_css():
         hr {
             border-color: rgba(105, 124, 170, 0.22);
         }
-        
-    .section-card:empty {
-        display: none !important;
-        height: 0 !important;
-        min-height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        border: 0 !important;
-        background: transparent !important;
-    }
 
-    
-    /* Final alignment: lower only the Live Analysis heading */
-    .live-analysis-title-align {
-        margin-top: 1.15rem !important;
-    }
+        .section-card:empty {
+            display: none !important;
+            height: 0 !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            background: transparent !important;
+        }
 
-    </style>
+        /* Final alignment: lower only the Live Analysis heading */
+        .live-analysis-title-align {
+            margin-top: 1.15rem !important;
+        }
+
+        </style>
         """,
         unsafe_allow_html=True,
     )
@@ -205,7 +206,11 @@ def clean_text(value, fallback="—"):
         return fallback
 
     if isinstance(value, list):
-        cleaned = [str(v).strip() for v in value if str(v).strip() and str(v).strip().lower() != "unknown"]
+        cleaned = [
+            str(v).strip()
+            for v in value
+            if str(v).strip() and str(v).strip().lower() != "unknown"
+        ]
         return "; ".join(cleaned) if cleaned else fallback
 
     value = str(value).strip()
@@ -252,13 +257,22 @@ def fallback_risks(deal):
     ]
 
     if "data" in sector or "consumer" in sector:
-        inferred.insert(1, "Consumer data, privacy, consent, and compliance expectations could create regulatory or trust-related risk.")
+        inferred.insert(
+            1,
+            "Consumer data, privacy, consent, and compliance expectations could create regulatory or trust-related risk.",
+        )
 
     if "health" in sector:
-        inferred.insert(1, "Healthcare compliance, implementation complexity, and integration with existing clinical systems could slow adoption.")
+        inferred.insert(
+            1,
+            "Healthcare compliance, implementation complexity, and integration with existing clinical systems could slow adoption.",
+        )
 
     if "fintech" in sector or "finance" in sector:
-        inferred.insert(1, "Financial services compliance, trust, and enterprise procurement requirements could lengthen sales cycles.")
+        inferred.insert(
+            1,
+            "Financial services compliance, trust, and enterprise procurement requirements could lengthen sales cycles.",
+        )
 
     return inferred[:6]
 
@@ -339,7 +353,13 @@ def render_result(deal):
     render_metrics(deal)
 
     tab_summary, tab_fields, tab_scorecard, tab_risks, tab_export = st.tabs(
-        ["Executive Summary", "Structured Fields", "Diligence Scorecard", "Risks & Questions", "Export Preview"]
+        [
+            "Executive Summary",
+            "Structured Fields",
+            "Diligence Scorecard",
+            "Risks & Questions",
+            "Export Preview",
+        ]
     )
 
     with tab_summary:
@@ -384,14 +404,18 @@ def render_result(deal):
             "Source Context": deal.relationship_context,
             "CRM Tags": clean_text(deal.crm_tags),
         }
-        st.dataframe(pd.DataFrame(fields.items(), columns=["Field", "Value"]), use_container_width=True)
+        fields_df = pd.DataFrame(
+            [(field, clean_text(value)) for field, value in fields.items()],
+            columns=["Field", "Value"],
+        )
+        st.dataframe(fields_df, width="stretch")
 
     with tab_scorecard:
         df = scorecard_dataframe(deal.diligence_scorecard)
         if df.empty:
             st.info("No scorecard generated.")
         else:
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
 
     with tab_risks:
         col1, col2 = st.columns(2)
@@ -411,13 +435,17 @@ def render_result(deal):
                 for q in questions:
                     st.markdown(f"- {clean_text(q)}")
             else:
-                st.markdown("- What evidence supports revenue quality, retention, customer demand, and defensibility?")
-                st.markdown("- What are the largest risks to adoption, margins, and competitive positioning?")
+                st.markdown(
+                    "- What evidence supports revenue quality, retention, customer demand, and defensibility?"
+                )
+                st.markdown(
+                    "- What are the largest risks to adoption, margins, and competitive positioning?"
+                )
             st.markdown("</div>", unsafe_allow_html=True)
 
     with tab_export:
         preview = create_pipeline_dataframe([deal])
-        st.dataframe(preview, use_container_width=True)
+        st.dataframe(preview, width="stretch")
         st.download_button(
             "Download This Deal CSV",
             data=preview.to_csv(index=False).encode("utf-8"),
@@ -437,10 +465,17 @@ def clear_workspace():
 
 def clear_pipeline():
     st.session_state["deals"] = []
+    st.session_state["deal_inputs"] = []
+    st.session_state.pop("memo_selected_deal", None)
     clear_workspace()
 
 
-def analyze_current_deal(company_name, source_type, investment_focus, company_notes):
+def analyze_current_deal(
+    company_name,
+    source_type,
+    investment_focus,
+    company_notes,
+):
     raw_notes = f"""
 Company name: {company_name}
 Source type: {source_type}
@@ -458,6 +493,10 @@ Company notes:
 
     st.session_state.latest_deal = deal
     st.session_state.deals.append(deal)
+    st.session_state.deal_inputs.append(raw_notes)
+
+    # Automatically select the newest analyzed company in the memo tab.
+    st.session_state["memo_selected_deal"] = len(st.session_state.deals) - 1
     st.session_state.analysis_complete = True
 
 
@@ -465,6 +504,9 @@ inject_css()
 
 if "deals" not in st.session_state:
     st.session_state.deals = []
+
+if "deal_inputs" not in st.session_state:
+    st.session_state.deal_inputs = []
 
 with st.sidebar:
     st.markdown(
@@ -480,11 +522,12 @@ with st.sidebar:
     st.markdown('<div class="small-label">Workflow</div>', unsafe_allow_html=True)
     st.markdown(
         """
-        1. Paste company notes  
-        2. Extract structured fields  
-        3. Score opportunity  
-        4. Generate diligence questions  
-        5. Export CRM-ready data  
+        1. Paste company notes
+        2. Extract structured fields
+        3. Score opportunity
+        4. Generate diligence questions
+        5. Generate investment memo
+        6. Export CRM-ready data
         """
     )
 
@@ -498,11 +541,13 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.button("Clear Workspace", use_container_width=True, on_click=clear_workspace)
-    st.button("Clear Pipeline", use_container_width=True, on_click=clear_pipeline)
+    st.button("Clear Workspace", width="stretch", on_click=clear_workspace)
+    st.button("Clear Pipeline", width="stretch", on_click=clear_pipeline)
 
 
-tab_deal, tab_pipeline = st.tabs(["Deal Intake", "Pipeline"])
+tab_deal, tab_pipeline, tab_memo = st.tabs(
+    ["Deal Intake", "Pipeline", "Investment Memo"]
+)
 
 with tab_deal:
     left, right = st.columns([0.42, 0.58], gap="large")
@@ -510,7 +555,10 @@ with tab_deal:
     with left:
         st.markdown('<div class="section-card">', unsafe_allow_html=True)
         st.markdown('<div class="section-title">1. Deal Intake</div>', unsafe_allow_html=True)
-        st.markdown('<p class="muted">Paste unstructured company notes and generate a structured diligence record.</p>', unsafe_allow_html=True)
+        st.markdown(
+            '<p class="muted">Paste unstructured company notes and generate a structured diligence record.</p>',
+            unsafe_allow_html=True,
+        )
 
         company_name = st.text_input(
             "Company Name",
@@ -520,7 +568,14 @@ with tab_deal:
 
         source_type = st.selectbox(
             "Source Type",
-            ["Research notes", "Company website text", "Funding announcement", "Founder call notes", "Investor update", "Other"],
+            [
+                "Research notes",
+                "Company website text",
+                "Funding announcement",
+                "Founder call notes",
+                "Investor update",
+                "Other",
+            ],
             key="source_type",
         )
 
@@ -537,12 +592,17 @@ with tab_deal:
             placeholder="Paste company description, traction, customers, business model, funding context, competitors, risks, or investment rationale.",
         )
 
-        if st.button("Analyze Deal", use_container_width=True):
+        if st.button("Analyze Deal", width="stretch"):
             if len(company_notes.strip()) < 100:
                 st.warning("Please provide more company context before analyzing.")
             else:
                 try:
-                    analyze_current_deal(company_name, source_type, investment_focus, company_notes)
+                    analyze_current_deal(
+                        company_name,
+                        source_type,
+                        investment_focus,
+                        company_notes,
+                    )
                     st.rerun()
                 except Exception as exc:
                     st.error(f"Error analyzing deal: {exc}")
@@ -554,8 +614,14 @@ with tab_deal:
         st.markdown("</div>", unsafe_allow_html=True)
 
     with right:
-        st.markdown('<div class="section-title live-analysis-title-align">2. Live Analysis & Results</div>', unsafe_allow_html=True)
-        st.markdown('<p class="muted">Backend-generated thesis, scoring, risks, diligence questions, and export-ready pipeline output.</p>', unsafe_allow_html=True)
+        st.markdown(
+            '<div class="section-title live-analysis-title-align">2. Live Analysis & Results</div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            '<p class="muted">Backend-generated thesis, scoring, risks, diligence questions, and export-ready pipeline output.</p>',
+            unsafe_allow_html=True,
+        )
 
         latest = st.session_state.get("latest_deal")
         if latest is None:
@@ -565,7 +631,10 @@ with tab_deal:
 
 with tab_pipeline:
     st.markdown('<div class="section-title">Pipeline</div>', unsafe_allow_html=True)
-    st.markdown('<p class="muted">Analyzed deals saved in this session and exportable as CRM-ready data.</p>', unsafe_allow_html=True)
+    st.markdown(
+        '<p class="muted">Analyzed deals saved in this session and exportable as CRM-ready data.</p>',
+        unsafe_allow_html=True,
+    )
 
     if not st.session_state.deals:
         st.info("No analyzed companies yet. Go to Deal Intake, paste notes, and click Analyze Deal.")
@@ -585,10 +654,10 @@ with tab_pipeline:
         ]
 
         display_cols = [c for c in display_cols if c in df.columns]
-        st.dataframe(df[display_cols], use_container_width=True)
+        st.dataframe(df[display_cols], width="stretch")
 
         with st.expander("Full export preview"):
-            st.dataframe(df, use_container_width=True)
+            st.dataframe(df, width="stretch")
 
         st.download_button(
             "Download CRM-Ready CSV",
@@ -596,3 +665,113 @@ with tab_pipeline:
             file_name="dealflow_pipeline_export.csv",
             mime="text/csv",
         )
+
+with tab_memo:
+    st.markdown(
+        '<div class="section-title">Investment Memo Generator</div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<p class="muted">'
+        "Select an analyzed company and download a concise "
+        "one-page investment brief as a PDF."
+        "</p>",
+        unsafe_allow_html=True,
+    )
+
+    if not st.session_state.deals:
+        st.info(
+            "Analyze a deal first before generating an investment memo."
+        )
+    else:
+        deal_names = [
+            clean_text(
+                getattr(deal, "company_name", f"Deal {i + 1}"),
+                f"Deal {i + 1}",
+            )
+            for i, deal in enumerate(st.session_state.deals)
+        ]
+
+        # Default to the newest analyzed company and keep the index valid.
+        current_selection = st.session_state.get(
+            "memo_selected_deal",
+            len(deal_names) - 1,
+        )
+        if not isinstance(current_selection, int):
+            current_selection = len(deal_names) - 1
+
+        st.session_state["memo_selected_deal"] = max(
+            0,
+            min(current_selection, len(deal_names) - 1),
+        )
+
+        selected_index = st.selectbox(
+            "Select a deal",
+            options=list(range(len(deal_names))),
+            format_func=lambda i: deal_names[i],
+            key="memo_selected_deal",
+        )
+
+        selected_deal = st.session_state.deals[selected_index]
+        selected_notes = (
+            st.session_state.deal_inputs[selected_index]
+            if selected_index < len(st.session_state.deal_inputs)
+            else ""
+        )
+
+        selected_company = clean_text(
+            getattr(selected_deal, "company_name", "Unknown"),
+            "Unknown",
+        )
+
+        st.info(
+            f"Selected company for memo generation: "
+            f"**{selected_company}**"
+        )
+
+        st.markdown("---")
+        st.markdown("### Selected Deal Snapshot")
+        render_metrics(selected_deal)
+
+        try:
+            # Generate the memo from the currently selected deal only.
+            memo = generate_investment_memo(
+                deal=selected_deal,
+                raw_notes=selected_notes,
+            )
+
+            generated_company = clean_text(
+                getattr(memo, "company_name", ""),
+                "",
+            )
+
+            if generated_company.lower() != selected_company.lower():
+                raise ValueError(
+                    "Generated memo company does not match "
+                    "the selected deal."
+                )
+
+            # Build the one-page PDF in memory.
+            memo_pdf = memo_to_pdf_bytes(memo)
+
+            safe_name = (
+                selected_company.replace(" ", "_")
+                .replace("/", "_")
+                .replace("\\", "_")
+                .lower()
+            )
+
+            # The visible action directly downloads the generated PDF.
+            st.download_button(
+                label=f"Generate Memo for {selected_company}",
+                data=memo_pdf,
+                file_name=f"{safe_name}_investment_brief.pdf",
+                mime="application/pdf",
+                key=f"download_memo_{selected_index}_{safe_name}",
+                width="stretch",
+            )
+
+        except Exception as exc:
+            st.error(
+                f"Error preparing investment memo: {exc}"
+            )
