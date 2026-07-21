@@ -5,3 +5,4 @@ openai
 pydantic
 altair<5
 openai-agents
+reportlab>=4.0
