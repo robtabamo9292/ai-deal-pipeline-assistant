@@ -37,7 +37,6 @@ def _safe_list(value):
 
 
 def analyze_deal_with_llm(raw_notes: str) -> DealRecord:
-    load_dotenv()
     normalized_notes = (raw_notes or "").strip()
     if not normalized_notes:
         raise ValueError("Deal notes cannot be empty.")
