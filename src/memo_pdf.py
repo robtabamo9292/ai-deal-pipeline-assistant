@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from io import BytesIO
+import re
 from typing import Any, Iterable
 
 from reportlab.lib.colors import HexColor
@@ -33,15 +34,41 @@ def _clean(value: object, fallback: str = "Not provided") -> str:
     return " ".join(text.split())
 
 
-def _clip_at_word(text: str, max_chars: int) -> str:
-    """Trim at a word boundary; never cut a word in half."""
-    text = _clean(text)
-    if len(text) <= max_chars:
-        return text
-    shortened = text[: max_chars + 1].rsplit(" ", 1)[0]
-    if not shortened:
-        shortened = text[:max_chars]
-    return shortened.rstrip(".,;: ") + "..."
+def _split_sentences(text: str) -> list[str]:
+    """Split cleaned text into complete sentences."""
+    cleaned = _clean(text, "")
+    if not cleaned:
+        return []
+
+    sentences = re.split(r"(?<=[.!?])\s+", cleaned)
+    return [sentence.strip() for sentence in sentences if sentence.strip()]
+
+
+def _clip_at_sentence(text: str, max_chars: int) -> str:
+    """
+    Condense text only at complete-sentence boundaries.
+
+    The first sentence is always preserved, even when it exceeds max_chars,
+    so the PDF never displays a sentence fragment ending in an ellipsis.
+    """
+    sentences = _split_sentences(text)
+    if not sentences:
+        return _clean(text)
+
+    selected: list[str] = []
+
+    for sentence in sentences:
+        candidate = " ".join(selected + [sentence])
+
+        if selected and len(candidate) > max_chars:
+            break
+
+        selected.append(sentence)
+
+        if len(candidate) >= max_chars:
+            break
+
+    return " ".join(selected)
 
 
 def _unique_items(
@@ -59,7 +86,7 @@ def _unique_items(
         if key in seen:
             continue
         seen.add(key)
-        output.append(_clip_at_word(text, max_chars))
+        output.append(_clip_at_sentence(text, max_chars))
         if len(output) >= limit:
             break
     return output
@@ -129,25 +156,71 @@ def _wrap_lines(
     return lines
 
 
-def _truncate_lines(
-    lines: list[str],
-    max_lines: int,
+def _fit_lines(
+    text: str,
     font_name: str,
     font_size: float,
+    min_font_size: float,
     max_width: float,
-) -> list[str]:
-    if len(lines) <= max_lines:
-        return lines
+    max_lines: int,
+) -> tuple[list[str], float]:
+    """
+    Fit complete text into the available line count by reducing font size.
 
-    visible = lines[:max_lines]
-    last = visible[-1]
-    while last and stringWidth(last.rstrip(".,;: ") + "...", font_name, font_size) > max_width:
-        if " " in last:
-            last = last.rsplit(" ", 1)[0]
+    When the complete block still cannot fit, retain the longest prefix made
+    of complete sentences. A sentence is never replaced with a fragment.
+    """
+    cleaned = _clean(text)
+    size = font_size
+
+    while size >= min_font_size:
+        lines = _wrap_lines(cleaned, font_name, size, max_width)
+        if len(lines) <= max_lines:
+            return lines, size
+        size = round(size - 0.2, 2)
+
+    sentences = _split_sentences(cleaned)
+    selected: list[str] = []
+
+    for sentence in sentences:
+        candidate = " ".join(selected + [sentence])
+        candidate_lines = _wrap_lines(
+            candidate,
+            font_name,
+            min_font_size,
+            max_width,
+        )
+
+        if len(candidate_lines) <= max_lines:
+            selected.append(sentence)
         else:
-            last = last[:-1]
-    visible[-1] = last.rstrip(".,;: ") + "..."
-    return visible
+            break
+
+    if selected:
+        fitted_text = " ".join(selected)
+        return (
+            _wrap_lines(
+                fitted_text,
+                font_name,
+                min_font_size,
+                max_width,
+            ),
+            min_font_size,
+        )
+
+    first_sentence = sentences[0] if sentences else cleaned
+    size = min_font_size
+
+    while size >= 5.4:
+        lines = _wrap_lines(first_sentence, font_name, size, max_width)
+        if len(lines) <= max_lines:
+            return lines, size
+        size = round(size - 0.2, 2)
+
+    return (
+        _wrap_lines(first_sentence, font_name, 5.4, max_width),
+        5.4,
+    )
 
 
 def _draw_wrapped(
@@ -160,16 +233,30 @@ def _draw_wrapped(
     font_size: float = 8.6,
     leading: float = 11,
     max_lines: int = 4,
+    min_font_size: float = 6.4,
     color=TEXT,
 ) -> float:
-    lines = _wrap_lines(text, font_name, font_size, width)
-    lines = _truncate_lines(lines, max_lines, font_name, font_size, width)
+    lines, fitted_font_size = _fit_lines(
+        text=text,
+        font_name=font_name,
+        font_size=font_size,
+        min_font_size=min_font_size,
+        max_width=width,
+        max_lines=max_lines,
+    )
+
+    effective_leading = max(
+        fitted_font_size + 1.6,
+        leading - (font_size - fitted_font_size),
+    )
 
     pdf.setFillColor(color)
-    pdf.setFont(font_name, font_size)
+    pdf.setFont(font_name, fitted_font_size)
+
     for line in lines:
         pdf.drawString(x, y, line)
-        y -= leading
+        y -= effective_leading
+
     return y
 
 
@@ -180,7 +267,7 @@ def _draw_bullets(
     y: float,
     width: float,
     max_items: int = 3,
-    max_lines_each: int = 2,
+    max_lines_each: int = 3,
 ) -> float:
     if not items:
         items = ["No supporting evidence was provided in the source notes."]
@@ -188,6 +275,7 @@ def _draw_bullets(
     for item in items[:max_items]:
         pdf.setFillColor(BLUE)
         pdf.circle(x + 2.5, y + 2.8, 1.8, fill=1, stroke=0)
+
         y = _draw_wrapped(
             pdf,
             item,
@@ -197,8 +285,10 @@ def _draw_bullets(
             font_size=8.1,
             leading=10.1,
             max_lines=max_lines_each,
+            min_font_size=5.8,
         )
         y -= 2.5
+
     return y
 
 
@@ -299,13 +389,14 @@ def memo_to_pdf_bytes(memo: Any) -> bytes:
     y -= 15
     y = _draw_wrapped(
         pdf,
-        _clip_at_word(memo.company_overview, 500),
+        _clip_at_sentence(memo.company_overview, 650),
         MARGIN_X,
         y,
         CONTENT_WIDTH,
-        font_size=8.6,
-        leading=10.7,
-        max_lines=4,
+        font_size=8.4,
+        leading=10.4,
+        max_lines=5,
+        min_font_size=6.6,
     )
     y -= 7
 
@@ -320,7 +411,7 @@ def memo_to_pdf_bytes(memo: Any) -> bytes:
     pdf.setFillColor(TEXT)
     pdf.drawString(left_x, section_top, "Investment Case")
     left_y = section_top - 15
-    thesis = _unique_items(memo.investment_thesis, limit=3, max_chars=145)
+    thesis = _unique_items(memo.investment_thesis, limit=3, max_chars=220)
     left_y = _draw_bullets(pdf, thesis, left_x, left_y, col_width)
 
     pdf.setFont("Helvetica-Bold", 10.5)
@@ -330,12 +421,12 @@ def memo_to_pdf_bytes(memo: Any) -> bytes:
     evidence: list[str] = []
     traction_text = _clean(memo.traction_and_customers, "")
     if traction_text:
-        evidence.append(traction_text)
+        evidence.extend(_split_sentences(traction_text))
     evidence.append(f"Business model: {_clean(memo.business_model)}")
     evidence.append(_clean(memo.market_opportunity))
     right_y = _draw_bullets(
         pdf,
-        _unique_items(evidence, limit=3, max_chars=145),
+        _unique_items(evidence, limit=3, max_chars=220),
         right_x,
         right_y,
         col_width,
@@ -354,7 +445,7 @@ def memo_to_pdf_bytes(memo: Any) -> bytes:
     left_y = section_top - 15
     left_y = _draw_bullets(
         pdf,
-        _unique_items(memo.key_risks, limit=3, max_chars=135),
+        _unique_items(memo.key_risks, limit=3, max_chars=220),
         left_x,
         left_y,
         col_width,
@@ -366,7 +457,7 @@ def memo_to_pdf_bytes(memo: Any) -> bytes:
     right_y = section_top - 15
     right_y = _draw_bullets(
         pdf,
-        _unique_items(memo.diligence_questions, limit=3, max_chars=135),
+        _unique_items(memo.diligence_questions, limit=3, max_chars=220),
         right_x,
         right_y,
         col_width,
@@ -376,7 +467,7 @@ def memo_to_pdf_bytes(memo: Any) -> bytes:
 
     # Recommendation callout
     recommendation = (
-        _unique_items(memo.recommended_next_steps, limit=1, max_chars=200)
+        _unique_items(memo.recommended_next_steps, limit=1, max_chars=320)
         or ["Complete targeted diligence before advancing."]
     )[0]
     callout_height = 62
