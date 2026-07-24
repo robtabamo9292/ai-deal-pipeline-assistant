@@ -20,10 +20,11 @@ def analyze_deal(raw_notes: str) -> AnalysisResult:
         from src.agent_workflow import analyze_deal_with_agents
 
         deal = analyze_deal_with_agents(raw_notes)
-        deal.analysis_path = "agents_sdk"
-        deal.model_name = os.getenv("OPENAI_AGENT_MODEL") or os.getenv(
-            "OPENAI_MODEL", "gpt-4o-mini"
-        )
+        if not deal.fallback_used:
+            deal.analysis_path = "agents_sdk"
+            deal.model_name = os.getenv("OPENAI_AGENT_MODEL") or os.getenv(
+                "OPENAI_MODEL", "gpt-4o-mini"
+            )
         return AnalysisResult(deal=deal)
     except Exception as exc:
         logger.warning(
