@@ -1,0 +1,4 @@
+case_id,expected_status,interpretation
+sample_01,Diligence Ready,Most core diligence categories contain explicit evidence.
+sample_02,Early / Incomplete,Some structured evidence exists but major underwriting areas remain incomplete.
+sample_03,Insufficient Evidence,The source notes do not support a defensible diligence review.
