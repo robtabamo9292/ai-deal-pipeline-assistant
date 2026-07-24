@@ -1,124 +1,204 @@
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
+
 import pytest
 from pydantic import ValidationError
 
-from src.agent_workflow import dealflow_agent
+from src.analysis_service import analyze_deal
 from src.export import create_pipeline_dataframe
+from src.llm import _extract_json, analyze_deal_with_llm
 from src.memo import generate_investment_memo
-from src.memo_pdf import memo_to_pdf_bytes
+from src.memo_pdf_v2 import memo_to_pdf_bytes
 from src.schema import DealRecord
-from src.scoring import determine_priority, fallback_deal_record
+from src.scoring import apply_vc_scorecard, determine_priority, fallback_deal_record
 
 
-def make_sample_deal() -> DealRecord:
+def make_deal() -> DealRecord:
     return DealRecord(
-        company_name="Acme Robotics",
-        sector="Artificial Intelligence",
-        subsector="Robotics",
-        business_model="Enterprise SaaS",
+        company_name="Northstar Health",
+        sector="Healthcare Software",
+        subsector="Prior Authorization",
+        business_model="Annual SaaS subscription",
         stage="Seed",
-        description="AI software for automating industrial robotics workflows.",
-        traction_signals=["$500K ARR", "Three enterprise customers"],
-        customer_signals=["Manufacturing companies"],
-        funding_signals=["Raised a $2M seed round"],
-        risks=["Long enterprise sales cycles"],
-        diligence_questions=["What is customer retention?"],
-        crm_tags=["AI", "Robotics"],
-        relationship_context="Founder introduction",
-        recommended_next_step="Schedule a diligence call.",
-        opportunity_score=82,
-        confidence_score=74,
-        priority="Medium / High Priority",
+        description="Workflow software for specialty clinics.",
+        traction_signals=[
+            "$420K ARR",
+            "12 paying clinics",
+            "96% gross retention",
+        ],
+        customer_signals=[
+            "Clinic administrators",
+            "Revenue-cycle teams",
+        ],
+        funding_signals=["Seed stage"],
+        risks=[
+            "HIPAA compliance",
+            "EHR integration complexity",
+            "Small customer base",
+        ],
+        diligence_questions=["What is CAC payback?"],
+        relationship_context="Fictional sample",
+        recommended_next_step="Review cohorts and customer references.",
     )
 
 
-def test_agent_quality_tool_is_registered():
-    tool_names = [
-        getattr(tool, "name", type(tool).__name__)
-        for tool in dealflow_agent.tools
-    ]
+def rich_notes() -> str:
+    return """
+Company: Northstar Health
+Founder has 10 years of domain experience. Product automates prior authorization.
+Customers are clinic administrators and revenue-cycle teams. 12 paying clinics,
+$420K ARR, 96% retention, and 38% growth. Annual SaaS pricing, 78% gross margin,
+14-month CAC payback. Founder-led outbound and billing partners. Competitors include
+EHR modules. Risks include HIPAA, security, integration complexity, and concentration.
+"""
 
-    assert "assess_note_quality" in tool_names
+
+def test_score_is_zero_for_no_supported_evidence():
+    deal = DealRecord()
+    scored = apply_vc_scorecard(deal, "")
+    assert scored.opportunity_score == 0
+    assert scored.priority == "Insufficient Evidence"
+
+
+def test_negative_traction_counts_as_evidence_not_quality():
+    deal = DealRecord(
+        company_name="DeclineCo",
+        sector="SaaS",
+        business_model="Subscription",
+        traction_signals=[
+            "ARR declined 20%",
+            "Retention fell to 70%",
+        ],
+        customer_signals=["Enterprise finance teams"],
+        risks=["Churn increased"],
+    )
+    scored = apply_vc_scorecard(
+        deal,
+        "ARR declined 20%. Retention fell to 70%. Churn increased.",
+    )
+    assert scored.opportunity_score > 0
+    assert scored.priority != "Diligence Ready"
 
 
 @pytest.mark.parametrize(
-    ("opportunity_score", "confidence_score", "expected"),
+    ("score", "confidence", "expected"),
     [
-        (85, 70, "High Priority"),
-        (85, 69, "Medium / High Priority"),
-        (75, 50, "Medium / High Priority"),
-        (60, 50, "Needs Diligence"),
-        (40, 50, "Low Priority"),
-        (39, 100, "Pass / Insufficient Info"),
+        (70, 65, "Diligence Ready"),
+        (70, 64, "Review Evidence Gaps"),
+        (50, 50, "Review Evidence Gaps"),
+        (25, 50, "Early / Incomplete"),
+        (24, 100, "Insufficient Evidence"),
     ],
 )
-def test_priority_thresholds(
-    opportunity_score,
-    confidence_score,
-    expected,
-):
-    assert determine_priority(opportunity_score, confidence_score) == expected
+def test_diligence_status_thresholds(score, confidence, expected):
+    assert determine_priority(score, confidence) == expected
 
 
-def test_deal_score_bounds_are_enforced():
+def test_score_bounds_are_enforced():
     with pytest.raises(ValidationError):
         DealRecord(opportunity_score=101)
-
     with pytest.raises(ValidationError):
         DealRecord(confidence_score=-1)
 
 
-def test_memo_preserves_core_deal_information():
-    deal = make_sample_deal()
-    memo = generate_investment_memo(deal)
-
-    assert memo.company_name == "Acme Robotics"
-    assert memo.sector == "Artificial Intelligence"
-    assert memo.opportunity_score == 82
-    assert memo.confidence_score == 74
-    assert "Acme Robotics" in memo.executive_summary
+def test_extract_json_handles_wrapped_json_and_rejects_invalid():
+    assert _extract_json('Result: {"company_name": "Acme"}') == {
+        "company_name": "Acme"
+    }
+    with pytest.raises(ValueError):
+        _extract_json("not json")
 
 
-def test_pipeline_export_contains_expected_columns():
-    deal = make_sample_deal()
+def test_missing_api_key_returns_visible_fallback(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    notes = (
+        "Company: Acme\n"
+        "The company builds workflow software for clinics."
+    ) * 3
+    deal = analyze_deal_with_llm(notes)
+    assert deal.fallback_used is True
+    assert deal.analysis_path == "deterministic_fallback"
+    assert "OPENAI_API_KEY" in deal.analysis_warning
+
+
+def test_mocked_llm_path(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    response = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(
+                    content=(
+                        '{"company_name":"Acme","sector":"SaaS",'
+                        '"subsector":"Workflow","business_model":"Subscription",'
+                        '"stage":"Seed","description":"Workflow software",'
+                        '"traction_signals":["$500K ARR"],'
+                        '"customer_signals":["Clinics"],'
+                        '"funding_signals":[],"risks":["Competition"],'
+                        '"diligence_questions":["What is retention?"],'
+                        '"crm_tags":["SaaS"],'
+                        '"relationship_context":"Research notes",'
+                        '"recommended_next_step":"Review cohorts"}'
+                    )
+                )
+            )
+        ]
+    )
+    client = MagicMock()
+    client.chat.completions.create.return_value = response
+    with patch("src.llm.OpenAI", return_value=client):
+        notes = (
+            "Company: Acme. $500K ARR. Clinics use the product. "
+            "Subscription pricing."
+        ) * 3
+        deal = analyze_deal_with_llm(notes)
+    assert deal.company_name == "Acme"
+    assert deal.analysis_path == "openai_chat_completions"
+    assert deal.fallback_used is False
+
+
+def test_analysis_service_surfaces_primary_failure(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    with patch(
+        "src.agent_workflow.analyze_deal_with_agents",
+        side_effect=RuntimeError("agents unavailable"),
+    ):
+        with patch(
+            "src.analysis_service.analyze_deal_with_llm",
+            return_value=apply_vc_scorecard(make_deal(), rich_notes()),
+        ):
+            result = analyze_deal(rich_notes())
+    assert "agents unavailable" in result.primary_error
+    assert result.deal.analysis_path == "openai_chat_completions"
+    assert result.deal.analysis_warning
+
+
+def test_export_includes_provenance_and_evidence_names():
+    deal = apply_vc_scorecard(make_deal(), rich_notes())
     dataframe = create_pipeline_dataframe([deal])
-
-    expected_columns = {
-        "company_name",
-        "sector",
-        "stage",
-        "opportunity_score",
-        "confidence_score",
-        "priority",
-        "recommended_next_step",
+    expected = {
+        "evidence_completeness_score",
+        "diligence_status",
+        "extraction_confidence",
+        "analysis_path",
+        "score_methodology",
         "prompt_version",
     }
-
-    assert expected_columns.issubset(dataframe.columns)
-    assert len(dataframe) == 1
-    assert dataframe.loc[0, "company_name"] == "Acme Robotics"
-    assert dataframe.loc[0, "opportunity_score"] == 82
+    assert expected.issubset(dataframe.columns)
 
 
-def test_pdf_generation_returns_valid_pdf_bytes():
-    deal = make_sample_deal()
+def test_pdf_contains_valid_bytes():
+    deal = apply_vc_scorecard(make_deal(), rich_notes())
     memo = generate_investment_memo(deal)
-    pdf_bytes = memo_to_pdf_bytes(memo)
-
-    assert isinstance(pdf_bytes, bytes)
-    assert pdf_bytes.startswith(b"%PDF")
-    assert len(pdf_bytes) > 1_000
+    pdf = memo_to_pdf_bytes(memo)
+    assert pdf.startswith(b"%PDF")
+    assert len(pdf) > 1_000
 
 
-def test_fallback_record_extracts_company_and_stays_bounded():
-    notes = """
-Company: Acme Robotics
-The company develops robotics software for manufacturers.
-"""
-
-    deal = fallback_deal_record(notes)
-
+def test_fallback_record_is_explicit():
+    deal = fallback_deal_record(
+        "Company: Acme Robotics\nBuilds robotics software."
+    )
     assert deal.company_name == "Acme Robotics"
-    assert 0 <= deal.opportunity_score <= 100
-    assert 0 <= deal.confidence_score <= 100
-    assert deal.diligence_scorecard
+    assert deal.fallback_used is True
+    assert deal.analysis_warning
     assert "Needs Review" in deal.crm_tags
