@@ -121,6 +121,22 @@ def test_missing_api_key_returns_visible_fallback(monkeypatch):
     assert "OPENAI_API_KEY" in deal.analysis_warning
 
 
+def test_analysis_service_preserves_deterministic_fallback_provenance(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    notes = "Company: Acme\nThe company builds workflow software for clinics."
+    fallback = fallback_deal_record(notes)
+
+    with patch(
+        "src.agent_workflow.analyze_deal_with_agents",
+        return_value=fallback,
+    ):
+        result = analyze_deal(notes)
+
+    assert result.deal.fallback_used is True
+    assert result.deal.analysis_path == "deterministic_fallback"
+    assert result.deal.model_name == "none"
+
+
 def test_mocked_llm_path(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     response = SimpleNamespace(
