@@ -1,103 +1,47 @@
-from src.schema import DealRecord
 from src.memo_schema import InvestmentMemo
+from src.schema import DealRecord
 
 
-def _join_items(items):
-    if not items:
-        return "Unknown"
-    return "; ".join([str(item) for item in items if str(item).strip()])
+def _join(items):
+    return "; ".join(str(item) for item in items or []) or "Not provided"
 
 
-def generate_investment_memo(deal: DealRecord, raw_notes: str = "") -> InvestmentMemo:
-    """
-    Generate an investment memo from an analyzed DealRecord.
-
-    This first version is deterministic and uses the deal fields already created
-    by the pipeline. It avoids inventing facts and keeps unsupported sections
-    marked as Unknown or framed as diligence items.
-    """
-
-    traction = _join_items(deal.traction_signals)
-    customers = _join_items(deal.customer_signals)
-    funding = _join_items(deal.funding_signals)
-    risks = deal.risks or ["Insufficient information provided to fully assess risk."]
-    questions = deal.diligence_questions or [
-        "What additional information is needed to evaluate this opportunity?"
-    ]
-
-    thesis_points = []
-
-    if deal.description and deal.description != "Unknown":
-        thesis_points.append(
-            f"{deal.company_name} appears relevant because {deal.description}"
-        )
-
+def generate_investment_memo(
+    deal: DealRecord,
+    raw_notes: str = "",
+) -> InvestmentMemo:
+    thesis = (
+        [deal.description]
+        if deal.description and deal.description != "Unknown"
+        else []
+    )
     if deal.traction_signals:
-        thesis_points.append(
-            f"The company shows potential traction signals including: {traction}."
+        thesis.append(
+            f"Documented traction evidence includes: {_join(deal.traction_signals)}."
         )
-
     if deal.customer_signals:
-        thesis_points.append(
-            f"The customer opportunity appears tied to: {customers}."
+        thesis.append(
+            f"Documented customer evidence includes: {_join(deal.customer_signals)}."
         )
-
-    if deal.business_model and deal.business_model != "Unknown":
-        thesis_points.append(
-            f"The business model is described as {deal.business_model}, which should be validated through customer, pricing, and retention diligence."
-        )
-
-    if not thesis_points:
-        thesis_points.append(
-            "The investment thesis is not yet fully supported by the provided notes and requires additional diligence."
-        )
+    if not thesis:
+        thesis = [
+            "The supplied notes do not yet support a complete investment thesis."
+        ]
 
     executive_summary = (
-        f"{deal.company_name} is a {deal.stage} company in the {deal.sector} sector. "
-        f"The current opportunity score is {deal.opportunity_score}/100 with a "
-        f"{deal.priority} priority rating and {deal.confidence_score}/100 confidence score. "
-        f"Based on the provided notes, the recommended next step is: {deal.recommended_next_step}"
+        f"{deal.company_name} is presented as a {deal.stage} company in "
+        f"{deal.sector}. The evidence-completeness score is "
+        f"{deal.opportunity_score}/100 and the diligence status is "
+        f"{deal.priority}. This score measures documented diligence coverage, "
+        f"not investment quality. Recommended next step: "
+        f"{deal.recommended_next_step}"
     )
-
-    company_overview = (
+    overview = (
         f"{deal.company_name} operates in {deal.sector}"
         f"{' / ' + deal.subsector if deal.subsector and deal.subsector != 'Unknown' else ''}. "
-        f"Description: {deal.description}. "
+        f"Business model: {deal.business_model}. "
         f"Source context: {deal.relationship_context}."
     )
-
-    market_opportunity = (
-        f"The available notes suggest exposure to the {deal.sector} market. "
-        "Further diligence should size the market, identify buyer urgency, assess budget ownership, "
-        "and compare the opportunity against existing alternatives."
-    )
-
-    product_and_differentiation = (
-        f"Product summary: {deal.description}. "
-        "Differentiation should be validated through customer references, competitor comparison, "
-        "workflow depth, switching costs, and evidence of measurable ROI."
-    )
-
-    traction_and_customers = (
-        f"Traction signals: {traction}. "
-        f"Customer signals: {customers}. "
-        f"Funding signals: {funding}."
-    )
-
-    go_to_market = (
-        "The notes do not fully establish go-to-market repeatability. "
-        "Recommended diligence should evaluate sales cycle, target customer profile, pipeline quality, "
-        "conversion rates, pricing, retention, and founder-led versus repeatable sales."
-    )
-
-    recommended_next_steps = [
-        deal.recommended_next_step,
-        "Request customer references or case studies.",
-        "Validate traction, revenue quality, and retention metrics.",
-        "Benchmark competitors and substitute solutions.",
-        "Clarify funding history, runway, and near-term financing needs.",
-    ]
-
     return InvestmentMemo(
         company_name=deal.company_name,
         sector=deal.sector,
@@ -107,18 +51,24 @@ def generate_investment_memo(deal: DealRecord, raw_notes: str = "") -> Investmen
         priority=deal.priority,
         confidence_score=deal.confidence_score,
         executive_summary=executive_summary,
-        company_overview=company_overview,
-        investment_thesis=thesis_points,
-        market_opportunity=market_opportunity,
-        product_and_differentiation=product_and_differentiation,
-        traction_and_customers=traction_and_customers,
-        business_model=deal.business_model,
-        go_to_market=go_to_market,
-        key_risks=risks,
-        diligence_questions=questions,
-        recommended_next_steps=recommended_next_steps,
-        source_limitations=(
-            "This memo uses only the provided company notes and the structured deal record generated by DealFlow AI. "
-            "It does not verify facts externally and should be reviewed by a human investor or analyst."
+        company_overview=overview,
+        investment_thesis=thesis,
+        traction_and_customers=(
+            f"Traction: {_join(deal.traction_signals)}. "
+            f"Customers: {_join(deal.customer_signals)}. "
+            f"Funding: {_join(deal.funding_signals)}."
         ),
+        key_risks=deal.risks or ["Risk evidence was not provided."],
+        diligence_questions=deal.diligence_questions,
+        recommended_next_steps=[deal.recommended_next_step],
+        source_limitations=(
+            "Uses only the supplied notes. No claims were independently "
+            "verified. The evidence score measures completeness and is not "
+            "an investment recommendation."
+        ),
+        score_methodology=deal.score_methodology,
+        analysis_path=deal.analysis_path,
+        model_name=deal.model_name,
+        prompt_version=deal.prompt_version,
+        generated_at=deal.generated_at,
     )
