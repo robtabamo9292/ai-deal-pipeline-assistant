@@ -9,7 +9,7 @@ CSS = """
 .stApp { background: #F7F8FA; color: #172033; }
 .block-container { max-width: 1480px; padding-top: 1.3rem; padding-bottom: 2rem; }
 section[data-testid="stSidebar"] { background: #FFFFFF; border-right: 1px solid #E4E7EC; }
-h1, h2, h3, h4, h5, h6, p, label, span, div { color: #172033; }
+h1, h2, h3, h4, h5, h6, p, label { color: #172033; }
 .muted { color: #667085 !important; font-size: .92rem; }
 .sidebar-brand { border-bottom: 1px solid #E4E7EC; padding: .3rem 0 1rem; margin-bottom: 1rem; }
 .sidebar-title { font-size: 1.12rem; font-weight: 700; letter-spacing: -.01em; }
@@ -36,26 +36,29 @@ h1, h2, h3, h4, h5, h6, p, label, span, div { color: #172033; }
   font-weight: 650 !important;
   min-height: 40px;
 }
-.stButton button p, .stButton button span,
-.stDownloadButton button p, .stDownloadButton button span,
-[data-testid="stFormSubmitButton"] button p,
-[data-testid="stFormSubmitButton"] button span {
+.stButton button *, .stDownloadButton button *,
+[data-testid="stFormSubmitButton"] button * {
   color: #FFFFFF !important;
 }
 .stButton button:hover, .stDownloadButton button:hover, [data-testid="stFormSubmitButton"] button:hover {
   background: #344054 !important;
   border-color: #344054 !important;
 }
-.stButton button:disabled, .stDownloadButton button:disabled, [data-testid="stFormSubmitButton"] button:disabled {
+.stButton button:disabled, .stButton button[disabled], .stButton button[aria-disabled="true"],
+.stDownloadButton button:disabled, .stDownloadButton button[disabled], .stDownloadButton button[aria-disabled="true"],
+[data-testid="stFormSubmitButton"] button:disabled,
+[data-testid="stFormSubmitButton"] button[disabled],
+[data-testid="stFormSubmitButton"] button[aria-disabled="true"] {
   background: #EAECF0 !important;
   color: #667085 !important;
   border-color: #D0D5DD !important;
   opacity: 1 !important;
 }
-.stButton button:disabled p, .stButton button:disabled span,
-.stDownloadButton button:disabled p, .stDownloadButton button:disabled span,
-[data-testid="stFormSubmitButton"] button:disabled p,
-[data-testid="stFormSubmitButton"] button:disabled span {
+.stButton button:disabled *, .stButton button[disabled] *, .stButton button[aria-disabled="true"] *,
+.stDownloadButton button:disabled *, .stDownloadButton button[disabled] *, .stDownloadButton button[aria-disabled="true"] *,
+[data-testid="stFormSubmitButton"] button:disabled *,
+[data-testid="stFormSubmitButton"] button[disabled] *,
+[data-testid="stFormSubmitButton"] button[aria-disabled="true"] * {
   color: #667085 !important;
 }
 [data-testid="stDataFrame"] { border: 1px solid #E4E7EC; border-radius: 8px; overflow: hidden; }
