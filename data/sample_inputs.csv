@@ -1,0 +1,4 @@
+case_id,company_name,note_type,notes
+sample_01,Northstar Health,complete,"Product, customer, quantitative traction, pricing, GTM, competition, and risk evidence are provided."
+sample_02,Atlas Robotics,partial,"Product and customer context are provided, but traction, economics, and team evidence are missing."
+sample_03,Unknown Company,minimal,"A company builds software."

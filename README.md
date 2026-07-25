@@ -1,150 +1,93 @@
-# DealFlow AI — AI Deal Pipeline Assistant
+# DealFlow AI — Private-Market Diligence Workspace
 
-DealFlow AI is a Streamlit application that converts unstructured company notes into structured investment analysis, opportunity scoring, diligence questions, pipeline records, and a downloadable one-page investment brief.
+DealFlow AI is a Streamlit application that converts unstructured company notes into structured diligence evidence, prioritized information gaps, CRM-ready pipeline records, and a downloadable one-page investment brief.
 
-The project demonstrates an end-to-end AI workflow for venture sourcing, private-market screening, analyst research, and CRM preparation.
+The project demonstrates an end-to-end AI workflow for venture sourcing, private-market screening, analyst research, and business-operations automation.
 
-Private Streamlit Cloud access is available upon request.
+## Product workflow
 
----
-
-## Product Workflow
-
-1. Paste unstructured company or founder notes.
-2. Extract structured company and investment fields.
-3. Evaluate evidence quality and opportunity fit.
-4. Generate risks and priority diligence questions.
+1. Load a sample company or paste unstructured notes.
+2. Extract structured company, customer, traction, funding, risk, and business-model evidence.
+3. Measure diligence evidence completeness across nine categories.
+4. Identify the weakest evidence areas and generate targeted diligence questions.
 5. Add the company to a session-based pipeline.
-6. Generate and download a one-page PDF investment brief.
-7. Export pipeline data as a CRM-ready CSV file.
+6. Export CRM-ready CSV data or a one-page PDF brief.
 
----
+## Important scoring distinction
 
-## Screenshots
+The displayed score is an **evidence-completeness score**. It measures how much decision-useful diligence information is present in the submitted notes.
 
-### Investment Analysis
+It does **not** measure investment quality, expected returns, valuation attractiveness, or the probability that a company will succeed.
 
-![Investment analysis summary](assets/screenshots/analysis-summary.png)
+The deterministic rubric evaluates documented evidence across:
 
-### Risks and Diligence Questions
+- Founder and team
+- Market
+- Product and differentiation
+- Traction and product-market-fit evidence
+- Customer and ICP clarity
+- Business model and unit economics
+- Go-to-market evidence
+- Competition
+- Material risks
 
-![Risks and diligence questions](assets/screenshots/risks-questions.png)
+Missing evidence receives zero points. The scoring method is documented and evaluated against a set of complete, partial, minimal, negative, and risk-heavy examples.
 
-### Investment Memo Deal Snapshot
-
-![Investment memo deal snapshot](assets/screenshots/investment-deal-snapshot.png)
-
-### Downloadable Investment Brief
-
-![Downloadable PDF investment brief](assets/screenshots/investment-brief-pdf.png)
-
----
-
-## Key Features
+## Key features
 
 - Unstructured company-note intake
-- AI-generated company and investment summaries
-- Structured fields validated with Pydantic
-- Opportunity and confidence scoring
-- Priority classification
-- Evidence-based diligence scorecard
-- Inferred risks and targeted diligence questions
+- Public sample mode using built-in demonstration companies
+- Standard OpenAI and optional OpenAI Agents SDK analysis paths
+- Pydantic-validated structured records
+- Deterministic evidence-completeness scorecard
+- Explicit analysis-path, model, fallback, prompt-version, and timestamp metadata
+- Targeted diligence questions based on evidence gaps
 - Session-based deal pipeline
 - CRM-ready CSV export
-- One-page investment memo generation
-- Downloadable PDF investment brief
-- Standard OpenAI API analysis workflow
-- Optional OpenAI Agents SDK workflow
-- Fallback record generation when AI analysis is unavailable
-- Automated tests and GitHub Actions validation
-
----
+- Institutional one-page PDF investment brief
+- Deterministic evaluation set and results
+- Mocked AI and failure-path tests
+- Ruff linting and GitHub Actions CI
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    A[Unstructured Company Notes] --> B[Streamlit Interface]
-    B --> C{Analysis Path}
-    C --> D[OpenAI API]
-    C --> E[OpenAI Agents SDK]
-    D --> F[Pydantic DealRecord]
-    E --> F
-    F --> G[Deterministic Scoring and Diligence]
-    G --> H[Pipeline and CSV Export]
-    G --> I[Investment Memo]
-    I --> J[One-Page PDF Brief]
+    A[Company or Founder Notes] --> B[Streamlit Workspace]
+    B --> C[Analysis Service]
+    C --> D[OpenAI Agents SDK]
+    C --> E[Standard OpenAI API]
+    C --> F[Explicit Fallback]
+    D --> G[Pydantic DealRecord]
+    E --> G
+    F --> G
+    G --> H[Evidence Completeness Rubric]
+    H --> I[Evidence Scorecard]
+    H --> J[Pipeline and CSV Export]
+    H --> K[One-Page PDF Brief]
 ```
 
-The language model extracts and organizes information from the source notes. Deterministic Python functions then apply scoring rules, calculate confidence, assign priority, and build the diligence scorecard.
+The language model extracts and organizes information. Python then applies a transparent evidence rubric. AI execution provenance is retained so users can see which path produced the record and whether fallback logic was used.
 
----
+## Public sample mode
 
-## Example Use Case
+The app includes built-in sample notes for public demonstration. A fictional healthcare workflow company is included so users can test the full workflow without relying on confidential company information.
 
-An analyst pastes notes collected from a founder conversation, company website, pitch deck, or sourcing process.
+The public samples are demonstrations, not verified investment research.
 
-DealFlow AI produces:
-
-- Structured company information
-- Investment thesis
-- Market, traction, customer, and funding signals
-- Opportunity and confidence scores
-- Priority classification
-- Key risks
-- Priority diligence questions
-- Recommended next steps
-- Pipeline-ready data
-- A concise PDF investment brief
-
-The output can support venture sourcing, startup research, private-market screening, initial memo preparation, and CRM pipeline organization.
-
----
-
-## Tech Stack
-
-- Python
-- Streamlit
-- OpenAI API
-- OpenAI Agents SDK
-- Pydantic
-- Pandas
-- ReportLab
-- python-dotenv
-- Pytest
-- GitHub Actions
-
----
-
-## Local Setup
-
-Clone the repository:
+## Local setup
 
 ```bash
 git clone https://github.com/robtabamo9292/ai-deal-pipeline-assistant.git
 cd ai-deal-pipeline-assistant
-```
-
-Create and activate a virtual environment:
-
-```bash
 python -m venv .venv
 source .venv/bin/activate
-```
-
-Install application dependencies:
-
-```bash
 python -m pip install -r requirements.txt
-```
-
-Create your local environment file:
-
-```bash
 cp .env.example .env
+python -m streamlit run app.py
 ```
 
-Add your OpenAI API key to `.env`:
+Add your API key and preferred models to `.env`:
 
 ```env
 OPENAI_API_KEY=your_api_key_here
@@ -152,21 +95,9 @@ OPENAI_MODEL=gpt-4o-mini
 OPENAI_AGENT_MODEL=gpt-4o-mini
 ```
 
-Run the application:
+When no API key is configured, the application uses an explicitly labeled deterministic fallback record instead of presenting the result as AI-generated.
 
-```bash
-python -m streamlit run app.py
-```
-
-The local application is normally available at:
-
-```text
-http://localhost:8501
-```
-
----
-
-## Tests
+## Tests and evaluation
 
 Install development dependencies:
 
@@ -174,73 +105,73 @@ Install development dependencies:
 python -m pip install -r requirements-dev.txt
 ```
 
-Run the test suite:
+Run linting, tests, and the deterministic evaluation:
 
 ```bash
+python -m ruff check app.py src tests eval
 python -m pytest -q
+python -m eval.run_eval
 ```
 
-The automated tests cover:
+The automated test suite covers:
 
-- Agents SDK tool registration
-- Priority classification thresholds
-- Score boundaries
-- Investment memo generation
-- Pipeline export structure
-- PDF creation
-- Fallback company extraction
+- Evidence-score boundaries and status bands
+- Zero-evidence behavior
+- Negative traction evidence
+- Pydantic validation
+- JSON extraction and malformed responses
+- Missing API-key fallback behavior
+- Mocked OpenAI output
+- Agents SDK failure and fallback routing
+- Export provenance fields
+- PDF generation
 
-GitHub Actions also compiles the Python files and runs the test suite on pushes and pull requests.
+The evaluation set contains ten labeled examples spanning complete, partial, minimal, negative, team-only, traction-only, economics-heavy, and risk-heavy notes. Current expected cases pass the deterministic rubric.
 
----
-
-## Repository Structure
+## Repository structure
 
 ```text
 .
 ├── app.py
 ├── src/
+│   ├── analysis_service.py
 │   ├── agent_workflow.py
 │   ├── export.py
 │   ├── llm.py
 │   ├── memo.py
-│   ├── memo_pdf.py
+│   ├── memo_pdf_v2.py
 │   ├── memo_schema.py
 │   ├── sample_data.py
 │   ├── schema.py
-│   └── scoring.py
+│   ├── scoring.py
+│   └── ui/
+│       ├── components.py
+│       └── styles.py
 ├── tests/
 │   └── test_core.py
-├── assets/
-│   └── screenshots/
-├── archive/
-│   └── legacy_ui/
+├── eval/
+│   ├── eval_set.csv
+│   ├── eval_results.csv
+│   └── run_eval.py
+├── data/
+│   ├── sample_inputs.csv
+│   └── sample_outputs.csv
 ├── requirements.txt
 ├── requirements-dev.txt
-└── .github/
-    └── workflows/
-        └── tests.yml
+├── pyproject.toml
+└── .github/workflows/tests.yml
 ```
 
-The `archive/legacy_ui` directory contains an earlier interface prototype retained only as historical implementation reference. It is not used by the current application.
+## Privacy and limitations
 
----
-
-## Privacy and Limitations
-
-- Notes submitted through an enabled AI workflow are sent to the configured OpenAI service for analysis.
-- Do not enter confidential, regulated, or personally identifiable information without appropriate authorization.
-- Output quality depends on the completeness and accuracy of the source notes.
-- Scores are screening aids, not investment recommendations.
-- The application does not independently verify company claims, financial figures, funding rounds, customers, or market data.
+- Notes submitted through an enabled AI path are sent to the configured OpenAI service.
+- Do not submit confidential, regulated, or personally identifiable information without authorization.
+- The application does not independently verify claims, financial figures, customers, funding rounds, or market data.
+- The evidence score measures documentation completeness, not company quality.
+- Extraction confidence measures record completeness, not factual truth.
 - The current pipeline is session-based and is not a permanent CRM or database.
-- CSV output is CRM-ready, but the application does not directly synchronize with a CRM.
-- All generated analysis should be reviewed against primary sources and professional judgment.
+- All generated analysis requires human review and primary-source diligence.
 
----
+## Project status
 
-## Project Status
-
-The application is functional and includes deal intake, structured extraction, AI-assisted analysis, deterministic scoring, diligence generation, session-based pipeline tracking, CSV export, investment memo generation, and one-page PDF export.
-
-Automated tests and continuous integration are included to validate the core workflow.
+The application is functional and includes structured extraction, explicit fallback handling, evidence scoring, diligence generation, public samples, pipeline tracking, CSV export, PDF briefing, automated tests, deterministic evaluation, linting, and continuous integration.

@@ -1,0 +1,11 @@
+case_id,evidence_score,diligence_status,expected_min_score,expected_max_score,expected_status,passed
+E01,72,Diligence Ready,70,100,Diligence Ready,True
+E02,35,Early / Incomplete,20,55,Early / Incomplete,True
+E03,2,Insufficient Evidence,0,20,Insufficient Evidence,True
+E04,14,Insufficient Evidence,10,40,Insufficient Evidence,True
+E05,39,Early / Incomplete,20,55,Early / Incomplete,True
+E06,50,Review Evidence Gaps,30,70,Review Evidence Gaps,True
+E07,21,Insufficient Evidence,20,40,Insufficient Evidence,True
+E08,43,Early / Incomplete,35,75,Early / Incomplete,True
+E09,5,Insufficient Evidence,5,35,Insufficient Evidence,True
+E10,83,Diligence Ready,70,100,Diligence Ready,True
