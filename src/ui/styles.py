@@ -96,7 +96,7 @@ h1, h2, h3, h4, h5, h6, p, label,
 }
 
 .metric-sub {
-  color: #2EE985 !important;
+  color: #A7B3CA !important;
   font-size: 0.8rem;
   margin-top: 0.45rem;
 }
