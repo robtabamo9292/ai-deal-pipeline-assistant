@@ -1,6 +1,22 @@
 import pandas as pd
 
 
+DANGEROUS_CSV_PREFIXES = ("=", "+", "-", "@", "\t", "\r", "\n")
+
+
+def _sanitize_csv_value(value):
+    """
+    Prevent spreadsheet applications from interpreting exported text
+    as formulas when opening the CSV.
+
+    Sanitization is applied only at the export boundary so the
+    underlying DealRecord remains unchanged.
+    """
+    if isinstance(value, str) and value.startswith(DANGEROUS_CSV_PREFIXES):
+        return "'" + value
+    return value
+
+
 def _join_list(value):
     return "; ".join(str(item) for item in value or [])
 
@@ -14,6 +30,7 @@ def _scorecard_summary(scorecard):
 
 def create_pipeline_dataframe(deals):
     rows = []
+
     for deal in deals:
         row = {
             "company_name": deal.company_name,
@@ -48,6 +65,7 @@ def create_pipeline_dataframe(deals):
             "priority": deal.priority,
             "confidence_score": deal.confidence_score,
         }
+
         for item in deal.diligence_scorecard:
             column = (
                 item.category.lower()
@@ -58,5 +76,13 @@ def create_pipeline_dataframe(deals):
             row[f"{column}_score"] = item.score
             row[f"{column}_max"] = item.max_score
             row[f"{column}_evidence"] = item.evidence_level
+
+        # Sanitize all string values at the CSV/export boundary.
+        row = {
+            key: _sanitize_csv_value(value)
+            for key, value in row.items()
+        }
+
         rows.append(row)
+
     return pd.DataFrame(rows)

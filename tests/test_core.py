@@ -202,6 +202,28 @@ def test_export_includes_provenance_and_evidence_names():
     assert expected.issubset(dataframe.columns)
 
 
+def test_export_sanitizes_csv_formula_prefixes_without_mutating_deal():
+    dangerous_values = [
+        "=SUM(A1:A2)",
+        "+malicious",
+        "-malicious",
+        "@malicious",
+        "\tmalicious",
+        "\rmalicious",
+        "\nmalicious",
+    ]
+
+    for value in dangerous_values:
+        deal = make_deal()
+        deal.company_name = value
+
+        dataframe = create_pipeline_dataframe([deal])
+        exported_value = dataframe.loc[0, "company_name"]
+
+        assert exported_value == "'" + value
+        assert deal.company_name == value
+
+
 def test_pdf_contains_valid_bytes():
     deal = apply_vc_scorecard(make_deal(), rich_notes())
     memo = generate_investment_memo(deal)
