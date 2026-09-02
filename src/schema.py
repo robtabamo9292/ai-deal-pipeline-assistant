@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import List
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DiligenceScorecardItem(BaseModel):
@@ -11,6 +11,35 @@ class DiligenceScorecardItem(BaseModel):
     evidence_level: str = Field(default="Insufficient")
     rationale: str = Field(default="Unknown")
     diligence_question: str = Field(default="Unknown")
+
+
+class DealExtraction(BaseModel):
+    """
+    Narrow schema for model-controlled extraction output.
+
+    This model intentionally excludes application-owned fields such as
+    evidence scores, confidence, priority, provenance, fallback status,
+    model metadata, timestamps, and diligence scorecards.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    company_name: str = Field(default="Unknown")
+    sector: str = Field(default="Unknown")
+    subsector: str = Field(default="Unknown")
+    business_model: str = Field(default="Unknown")
+    stage: str = Field(default="Unknown")
+    description: str = Field(default="Unknown")
+
+    traction_signals: List[str] = Field(default_factory=list)
+    customer_signals: List[str] = Field(default_factory=list)
+    funding_signals: List[str] = Field(default_factory=list)
+    risks: List[str] = Field(default_factory=list)
+    diligence_questions: List[str] = Field(default_factory=list)
+    crm_tags: List[str] = Field(default_factory=list)
+
+    relationship_context: str = Field(default="Unknown")
+    recommended_next_step: str = Field(default="Unknown")
 
 
 class DealRecord(BaseModel):
@@ -46,5 +75,7 @@ class DealRecord(BaseModel):
     analysis_warning: str = Field(default="")
     model_name: str = Field(default="unknown")
     generated_at: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat(timespec="seconds")
+        default_factory=lambda: datetime.now(timezone.utc).isoformat(
+            timespec="seconds"
+        )
     )

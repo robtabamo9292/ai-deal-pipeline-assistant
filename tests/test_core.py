@@ -11,12 +11,41 @@ from src.export import create_pipeline_dataframe
 from src.llm import _extract_json, analyze_deal_with_llm
 from src.memo import generate_investment_memo
 from src.memo_pdf_v2 import memo_to_pdf_bytes
-from src.schema import DealRecord
+from src.schema import DealExtraction, DealRecord
 from src.scoring import apply_vc_scorecard, determine_priority, fallback_deal_record
 
 
 def make_deal() -> DealRecord:
     return DealRecord(
+        company_name="Northstar Health",
+        sector="Healthcare Software",
+        subsector="Prior Authorization",
+        business_model="Annual SaaS subscription",
+        stage="Seed",
+        description="Workflow software for specialty clinics.",
+        traction_signals=[
+            "$420K ARR",
+            "12 paying clinics",
+            "96% gross retention",
+        ],
+        customer_signals=[
+            "Clinic administrators",
+            "Revenue-cycle teams",
+        ],
+        funding_signals=["Seed stage"],
+        risks=[
+            "HIPAA compliance",
+            "EHR integration complexity",
+            "Small customer base",
+        ],
+        diligence_questions=["What is CAC payback?"],
+        relationship_context="Fictional sample",
+        recommended_next_step="Review cohorts and customer references.",
+    )
+
+
+def make_extraction() -> DealExtraction:
+    return DealExtraction(
         company_name="Northstar Health",
         sector="Healthcare Software",
         subsector="Prior Authorization",
@@ -107,6 +136,26 @@ def test_score_bounds_are_enforced():
         DealRecord(confidence_score=-1)
 
 
+def test_deal_extraction_rejects_application_owned_fields():
+    with pytest.raises(ValidationError):
+        DealExtraction(
+            company_name="Acme",
+            opportunity_score=100,
+        )
+
+    with pytest.raises(ValidationError):
+        DealExtraction(
+            company_name="Acme",
+            analysis_path="attacker-controlled",
+        )
+
+    with pytest.raises(ValidationError):
+        DealExtraction(
+            company_name="Acme",
+            fallback_used=True,
+        )
+
+
 def test_extract_json_handles_wrapped_json_and_rejects_invalid():
     assert _extract_json('Result: {"company_name": "Acme"}') == {
         "company_name": "Acme"
@@ -188,6 +237,34 @@ def test_mocked_llm_path(monkeypatch):
     assert deal.company_name == "Acme"
     assert deal.analysis_path == "openai_chat_completions"
     assert deal.fallback_used is False
+    assert deal.prompt_version == "v2.3-narrow-extraction"
+
+
+def test_llm_rejects_model_control_of_application_fields(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+
+    response = SimpleNamespace(
+        choices=[
+            SimpleNamespace(
+                message=SimpleNamespace(
+                    content=(
+                        '{"company_name":"Acme","sector":"SaaS",'
+                        '"opportunity_score":100,'
+                        '"analysis_path":"attacker-controlled"}'
+                    )
+                )
+            )
+        ]
+    )
+
+    client = MagicMock()
+    client.chat.completions.create.return_value = response
+
+    with patch("src.llm.OpenAI", return_value=client):
+        with pytest.raises(ValidationError):
+            analyze_deal_with_llm(
+                "Company: Acme. SaaS workflow platform."
+            )
 
 
 def test_llm_prompt_serializes_untrusted_source_notes(monkeypatch):
@@ -243,10 +320,10 @@ def test_llm_prompt_serializes_untrusted_source_notes(monkeypatch):
     assert "SOURCE_DATA_JSON:" in user_prompt
     assert expected_payload in user_prompt
     assert "<source_notes>\n" not in user_prompt
-    assert deal.prompt_version == "v2.2-source-json"
+    assert deal.prompt_version == "v2.3-narrow-extraction"
 
 
-def test_agents_path_serializes_untrusted_source_notes(monkeypatch):
+def test_agents_path_uses_narrow_extraction_schema(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
 
     malicious_notes = (
@@ -257,7 +334,7 @@ def test_agents_path_serializes_untrusted_source_notes(monkeypatch):
     )
 
     result = SimpleNamespace(
-        final_output=make_deal(),
+        final_output=make_extraction(),
     )
 
     with patch(
@@ -280,9 +357,10 @@ def test_agents_path_serializes_untrusted_source_notes(monkeypatch):
     assert "SOURCE_DATA_JSON:" in agent_input
     assert expected_payload in agent_input
     assert "<source_notes>\n" not in agent_input
-    assert "serialized JSON object" in dealflow_agent.instructions
+    assert dealflow_agent.output_type == DealExtraction
     assert "untrusted evidence" in dealflow_agent.instructions
-    assert deal.prompt_version == "v2.2-source-json"
+    assert deal.analysis_path == "agents_sdk"
+    assert deal.prompt_version == "v2.3-narrow-extraction"
 
 
 def test_analysis_service_surfaces_primary_failure(monkeypatch):
