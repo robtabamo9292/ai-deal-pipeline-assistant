@@ -1,11 +1,13 @@
-case_id,evidence_score,diligence_status,expected_min_score,expected_max_score,expected_status,passed
-E01,72,Diligence Ready,70,100,Diligence Ready,True
-E02,35,Early / Incomplete,20,55,Early / Incomplete,True
-E03,2,Insufficient Evidence,0,20,Insufficient Evidence,True
-E04,14,Insufficient Evidence,10,40,Insufficient Evidence,True
-E05,39,Early / Incomplete,20,55,Early / Incomplete,True
-E06,50,Review Evidence Gaps,30,70,Review Evidence Gaps,True
-E07,21,Insufficient Evidence,20,40,Insufficient Evidence,True
-E08,43,Early / Incomplete,35,75,Early / Incomplete,True
-E09,5,Insufficient Evidence,5,35,Insufficient Evidence,True
-E10,83,Diligence Ready,70,100,Diligence Ready,True
+case_id,evidence_score,diligence_status,expected_min_score,expected_max_score,expected_status,zero_checks_passed,passed
+E01,65,Review Evidence Gaps,60,75,Review Evidence Gaps,True,True
+E02,24,Insufficient Evidence,15,24,Insufficient Evidence,True,True
+E03,0,Insufficient Evidence,0,15,Insufficient Evidence,True,True
+E04,4,Insufficient Evidence,0,25,Insufficient Evidence,True,True
+E05,31,Early / Incomplete,25,45,Early / Incomplete,True,True
+E06,48,Early / Incomplete,38,49,Early / Incomplete,True,True
+E07,15,Insufficient Evidence,12,20,Insufficient Evidence,True,True
+E08,43,Early / Incomplete,35,55,Early / Incomplete,True,True
+E09,3,Insufficient Evidence,0,20,Insufficient Evidence,True,True
+E10,60,Review Evidence Gaps,55,70,Review Evidence Gaps,True,True
+E11,0,Insufficient Evidence,0,0,Insufficient Evidence,True,True
+E12,0,Insufficient Evidence,0,0,Insufficient Evidence,True,True

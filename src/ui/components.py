@@ -221,7 +221,7 @@ def render_result(deal) -> None:
             "Stage": deal.stage,
             "Diligence Status": deal.priority,
             "Evidence Completeness": deal.opportunity_score,
-            "Extraction Confidence": deal.confidence_score,
+            "Record Completeness": deal.confidence_score,
             "Source Context": deal.relationship_context,
             "CRM Tags": clean_text(deal.crm_tags),
         }

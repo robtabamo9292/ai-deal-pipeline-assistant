@@ -234,11 +234,11 @@ def _draw_metric_card(
     font_size = _fit_font_size(
         clean_value,
         "Helvetica-Bold",
-        max_size=11.5 if label != "REVIEW" else 9.0,
+        max_size=11.5 if label != "REVIEW STATUS" else 9.0,
         min_size=6.7,
         max_width=width - 12,
     )
-    value_color = _priority_color(clean_value) if label == "REVIEW" else NAVY
+    value_color = _priority_color(clean_value) if label == "REVIEW STATUS" else NAVY
     pdf.setFillColor(value_color)
     pdf.setFont("Helvetica-Bold", font_size)
     pdf.drawCentredString(x + width / 2, y + 13, clean_value)
@@ -337,9 +337,9 @@ def memo_to_pdf_bytes(memo: Any) -> bytes:
     )
 
     metrics = [
-        ("EVIDENCE", f"{memo.opportunity_score}/100"),
-        ("REVIEW", _clean(memo.priority)),
-        ("COVERAGE", f"{memo.confidence_score}/100"),
+        ("EVIDENCE COVERAGE", f"{memo.opportunity_score}/100"),
+        ("REVIEW STATUS", _clean(memo.priority)),
+        ("RECORD COMPLETENESS", f"{memo.confidence_score}/100"),
     ]
     card_y = header_y + 12
     for idx, (label, value) in enumerate(metrics):

@@ -8,7 +8,82 @@ UNKNOWN_VALUES = {
     "", "unknown", "n/a", "none", "not provided", "not available",
     "not disclosed", "undisclosed", "unspecified", "no information",
     "not yet known", "needs review", "requires review",
+    "tbd", "tbc", "to be confirmed", "to be determined", "pending",
 }
+
+# Phrases that mean information is absent or deferred, beyond plain negation.
+_DEFERRED = (
+    r"tbd|tbc|to be (?:confirmed|determined|provided|shared|verified|validated)|"
+    r"pending (?:confirmation|diligence|research|review|verification|the next)|"
+    r"placeholder|unconfirmed|not yet"
+)
+
+# Every word used by the rubric's evidence phrases, plus common filler. A
+# clause made almost entirely of these words names diligence topics without
+# stating facts about the company.
+_RUBRIC_VOCABULARY = set(
+    """
+    founder co-founder ceo management team background experience domain expertise
+    previously track record prior exit repeat operator market size tam addressable
+    budget why now tailwind tailwinds urgent regulatory driver workflow integration
+    proprietary differentiation switching cost network effect data advantage moat
+    retention cohort renewal usage buyer economic decision maker use case pain point
+    job done pricing subscription usage-based take rate gross margin cac payback ltv
+    expansion upsell net go-to-market gtm sales channel distribution pipeline
+    conversion cycle outbound inbound partner self-serve product-led plg competitor
+    competitors competition incumbent alternative defensible privacy security
+    compliance legal concentration churn runway execution risk risks strong large
+    good great clear solid evidence information details metrics company startup
+    product customers customer traction model business
+    """.split()
+)
+
+_STOPWORDS = set(
+    """
+    a an the and or of to in on for with by at as from into is are was were be been
+    has have had it its this that these those there their our we they he she his
+    her also very and/or plus both each all any some such than then so
+    use uses using include includes including provide provides offer offers
+    via through across
+    """.split()
+)
+
+
+def _in_vocabulary(word: str) -> bool:
+    return word in _RUBRIC_VOCABULARY or word.rstrip("s") in _RUBRIC_VOCABULARY
+
+
+def _is_fact_bearing(clause: str) -> bool:
+    """
+    True when a clause states something specific about the company.
+
+    Requires a figure, a named entity or acronym (e.g. "Salesforce", "CFO"),
+    or at least two content words outside the rubric vocabulary, and rejects
+    clauses that are mostly rubric keywords.
+    """
+    # Ignore a leading heading such as "Go-to-market:"; it is formatting.
+    body = re.sub(r"^\s*[A-Za-z][\w /&-]{0,30}:\s*", "", clause)
+    tokens = [token.strip(".,'") for token in re.findall(r"[A-Za-z0-9$%][\w$%.,'-]*", body)]
+    content = [token for token in tokens if token and token.lower() not in _STOPWORDS]
+    if not content:
+        return False
+    outside = [token for token in content if not _in_vocabulary(token.lower())]
+    has_figure = any(re.search(r"\d", token) for token in content)
+    # A specific company, product or role: capitalized mid-sentence, or an
+    # acronym such as CFO or HIPAA. Sentence-initial capitals do not count.
+    has_entity = any(
+        not _in_vocabulary(token.lower())
+        and token.lower() not in _STOPWORDS
+        and (
+            (len(token) >= 2 and token.isupper() and token.isalpha())
+            or (index > 0 and token[:1].isupper())
+        )
+        for index, token in enumerate(tokens)
+    )
+    vocabulary_share = 1 - len(outside) / len(content)
+    if vocabulary_share > 0.7 and not has_figure:
+        return False
+    return has_figure or has_entity or len(outside) >= 2
 
 
 def _clean_text(value) -> str:
@@ -38,7 +113,7 @@ def _has_any(text: str, phrases: Iterable[str]) -> bool:
     )
     missing = re.compile(
         r"\b(?:no|none|not|without|missing|unknown|undisclosed|"
-        r"unavailable|unreported|unspecified|lacking|lack|absent)\b",
+        r"unavailable|unreported|unspecified|lacking|lack|absent|" + _DEFERRED + r")\b",
         re.IGNORECASE,
     )
     disclosure = re.compile(
@@ -56,6 +131,10 @@ def _has_any(text: str, phrases: Iterable[str]) -> bool:
                 continue
             # Bare headings/keyword collections are not business disclosures.
             if len(re.findall(r"\b[\w-]+\b", clause)) < 4:
+                continue
+            # Keyword lists and keyword sentences ("the founder has experience
+            # and a track record") name topics without stating facts.
+            if not _is_fact_bearing(clause):
                 continue
             if disclosure.search(clause) or re.search(r"[$%\d]", clause):
                 return True

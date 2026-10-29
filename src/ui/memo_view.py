@@ -118,11 +118,11 @@ def render_investment_memo_workspace(
             f"**Diligence status:** {_plain_text(memo.priority)}"
         )
         st.markdown(
-            f"**Evidence completeness:** "
+            f"**Evidence coverage:** "
             f"{memo.opportunity_score}/100"
         )
         st.markdown(
-            f"**Extraction confidence:** "
+            f"**Record completeness:** "
             f"{memo.confidence_score}/100"
         )
 
