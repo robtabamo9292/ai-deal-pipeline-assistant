@@ -2,7 +2,7 @@
 
 These are manually prepared fields from a FICTIONAL case; no model was run.
 """
-from src.schema import DealRecord
+from src.schema import DealRecord, EvidenceExcerpt
 from src.scoring import apply_vc_scorecard
 
 
@@ -27,6 +27,20 @@ def curated_northstar_example(notes: str) -> DealRecord:
             "HIPAA compliance",
             "EHR integration complexity",
             "Small customer base and unproven acquisition efficiency",
+        ],
+        evidence_excerpts=[
+            EvidenceExcerpt(
+                category="Traction", claim="12 paying clinics and $420,000 ARR",
+                quote="12 paying clinics, $420,000 ARR",
+            ),
+            EvidenceExcerpt(
+                category="Business model", claim="Annual SaaS pricing per location and volume",
+                quote="Annual SaaS contracts priced by clinic location and authorization volume",
+            ),
+            EvidenceExcerpt(
+                category="Risk", claim="HIPAA and integration risks disclosed",
+                quote="HIPAA compliance, EHR integration complexity",
+            ),
         ],
         relationship_context="Fictional, manually curated demonstration.",
         recommended_next_step="Review customer cohorts and security controls.",
