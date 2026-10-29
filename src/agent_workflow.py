@@ -137,7 +137,7 @@ Do not return or attempt to set application-owned fields such as:
 - generated_at
 
 Use only factual information supported by the submitted source notes.
-Use Unknown for gaps.
+Use Unknown for gaps. Include up to 5 evidence_excerpts with category, claim,\nand verbatim quote copied from source_notes. Omit unsupported claims.\nSource quotations are for analyst review, not proof of external truth.
 Never invent facts.
 
 The downstream application calculates evidence completeness separately.
