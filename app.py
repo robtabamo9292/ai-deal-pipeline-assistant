@@ -64,31 +64,42 @@ def load_sample(sample_name: str) -> None:
     st.session_state["company_notes"] = REAL_SAMPLE_DEALS[sample_name]
 
 
+def _remember_analyzed_deal(deal, notes: str) -> None:
+    """Replace repeated records instead of silently duplicating pipeline rows."""
+    company_key = deal.company_name.strip().casefold()
+    existing = next(
+        (
+            i for i, (old, old_notes) in enumerate(
+                zip(st.session_state.deals, st.session_state.deal_inputs)
+            )
+            if old.company_name.strip().casefold() == company_key
+            and old_notes == notes
+        ),
+        None,
+    )
+    if existing is None:
+        st.session_state.deals.append(deal)
+        st.session_state.deal_inputs.append(notes)
+        existing = len(st.session_state.deals) - 1
+    else:
+        st.session_state.deals[existing] = deal
+    st.session_state["memo_selected_deal"] = existing
+    st.session_state["investment_memo_selected_deal"] = existing
+
+
 def run_analysis() -> None:
-    raw_notes = f"""
-Company name: {st.session_state.company_name}
-Source type: {st.session_state.source_type}
-Investment focus: {st.session_state.investment_focus}
-
-Company notes:
-{st.session_state.company_notes}
-""".strip()
-
-    with st.spinner(
-        "Analyzing notes and building the evidence scorecard..."
-    ):
+    # Form metadata is NOT evidence and must never affect the scoring rubric.
+    raw_notes = st.session_state.company_notes.strip()
+    with st.spinner("Extracting and reviewing documented information..."):
         result = analyze_deal(raw_notes)
 
-    st.session_state.latest_deal = result.deal
-    st.session_state.deals.append(result.deal)
-    st.session_state.deal_inputs.append(raw_notes)
-    st.session_state["memo_selected_deal"] = (
-        len(st.session_state.deals) - 1
-    )
-    st.session_state["investment_memo_selected_deal"] = (
-        len(st.session_state.deals) - 1
-    )
+    deal = result.deal
+    if st.session_state.company_name.strip() and not deal.fallback_used:
+        deal.company_name = st.session_state.company_name.strip()
+    st.session_state.latest_deal = deal
     st.session_state.analysis_complete = True
+    if not deal.fallback_used:
+        _remember_analyzed_deal(deal, raw_notes)
 
 
 initialize_state()
@@ -233,8 +244,8 @@ with tab_deal:
                 try:
                     run_analysis()
                     st.rerun()
-                except Exception as exc:
-                    st.error(str(exc))
+                except Exception:
+                    st.error("Analysis failed. Check your configuration and try again; see server logs for details.")
 
     with right:
         st.markdown(
