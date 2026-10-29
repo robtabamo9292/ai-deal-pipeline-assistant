@@ -4,7 +4,11 @@ from typing import Iterable, List
 from src.schema import DealRecord, DiligenceScorecardItem
 
 
-UNKNOWN_VALUES = {"", "unknown", "n/a", "none", "not provided"}
+UNKNOWN_VALUES = {
+    "", "unknown", "n/a", "none", "not provided", "not available",
+    "not disclosed", "undisclosed", "unspecified", "no information",
+    "not yet known",
+}
 
 
 def _clean_text(value) -> str:
@@ -20,8 +24,42 @@ def _known_items(values: Iterable[object]) -> list[str]:
 
 
 def _has_any(text: str, phrases: Iterable[str]) -> bool:
-    normalized = text.lower()
-    return any(phrase.lower() in normalized for phrase in phrases)
+    """Conservative evidence hint: require a meaningful, non-missing disclosure.
+
+    This is a heuristic for legacy records, NOT source-verification. It prevents
+    substring collisions (TAM/Amsterdam, CAC/cacao), missing-information
+    sentences, and bare keyword lists from earning evidence points.
+    """
+    if not text:
+        return False
+    expression = re.compile(
+        r"(?<![\\w])(?:" + "|".join(re.escape(p) for p in phrases) + r")(?![\\w])",
+        re.IGNORECASE,
+    )
+    missing = re.compile(
+        r"\\b(?:no|none|not|without|missing|unknown|undisclosed|"
+        r"unavailable|unreported|unspecified|lacking|lack|absent)\\b",
+        re.IGNORECASE,
+    )
+    disclosure = re.compile(
+        r"\\b(?:is|are|was|were|has|have|had|grew|declined|"
+        r"includes?|provides?|offers?|sells?|builds?|targets?|uses?|"
+        r"raised|launched|reported|generates?|faces?|requires?|"
+        r"signed|operates?|serves?|automates?|addresses?|drives?|"
+        r"achieved|works?|combines?|priced|founded|completed|"
+        r"measures?|estimated|led|partners?|customers?)\\b",
+        re.IGNORECASE,
+    )
+    for sentence in re.split(r"(?<=[.!?])\\s+|[\\r\\n;]+", text):
+        for clause in re.split(r"\\b(?:but|however|although|whereas)\\b", sentence, flags=re.IGNORECASE):
+            if not expression.search(clause) or missing.search(clause):
+                continue
+            # Bare headings/keyword collections are not business disclosures.
+            if len(re.findall(r"\\b[\\w-]+\\b", clause)) < 4:
+                continue
+            if disclosure.search(clause) or re.search(r"[$%\\d]", clause):
+                return True
+    return False
 
 
 def _has_quantitative_evidence(values: Iterable[str]) -> bool:
@@ -173,7 +211,7 @@ def apply_vc_scorecard(deal: DealRecord, raw_notes: str) -> DealRecord:
     deal.priority = determine_priority(deal.opportunity_score, deal.confidence_score)
     deal.diligence_questions = generate_priority_diligence_questions(deal, scorecard)
     deal.score_methodology = "evidence-completeness-v2"
-    deal.prompt_version = "v2.0-evidence-scorecard"
+    # Prompt version is owned by the extraction path, not the scorecard.
     if not _is_known(deal.recommended_next_step):
         lowest = sorted(scorecard, key=lambda row: row.score / row.max_score)[:3]
         focus = ", ".join(item.category.lower() for item in lowest)
@@ -190,17 +228,16 @@ def _extract_company_name(raw_notes: str) -> str:
 
 
 def fallback_deal_record(raw_notes: str) -> DealRecord:
-    deal = DealRecord(
+    """An unavailable AI analysis is *not* scored as investment evidence."""
+    return DealRecord(
         company_name=_extract_company_name(raw_notes),
-        description="AI extraction was unavailable. Review the source notes manually.",
-        risks=["Automated extraction was unavailable; manual review is required."],
-        diligence_questions=["What does the company do?", "Who are the customers and buyers?", "What traction has the company achieved?", "What is the business model?", "What are the main risks?"],
         crm_tags=["Needs Review"],
-        relationship_context="Source context unavailable.",
-        recommended_next_step="Check API configuration or review the notes manually.",
+        recommended_next_step="Configure the AI service or review the notes manually.",
+        priority="Not analyzed",
         analysis_path="deterministic_fallback",
         fallback_used=True,
-        analysis_warning="AI analysis was unavailable; deterministic fallback logic was used.",
+        analysis_warning="AI extraction was unavailable; no evidence score was calculated.",
         model_name="none",
+        score_methodology="not-scored",
+        prompt_version="not-run",
     )
-    return apply_vc_scorecard(deal, raw_notes)
