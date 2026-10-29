@@ -204,6 +204,10 @@ def determine_priority(evidence_score: int, confidence_score: int) -> str:
 
 
 def apply_vc_scorecard(deal: DealRecord, raw_notes: str) -> DealRecord:
+    from src.verification import match_source_excerpts
+
+    # Matching a quote does not verify its semantics or external truth.
+    deal.source_matches = match_source_excerpts(deal.evidence_excerpts, raw_notes)
     scorecard = build_due_diligence_scorecard(deal, raw_notes)
     deal.diligence_scorecard = scorecard
     deal.opportunity_score = max(0, min(100, sum(item.score for item in scorecard)))
