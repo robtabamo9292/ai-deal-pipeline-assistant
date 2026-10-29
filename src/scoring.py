@@ -33,31 +33,31 @@ def _has_any(text: str, phrases: Iterable[str]) -> bool:
     if not text:
         return False
     expression = re.compile(
-        r"(?<![\\w])(?:" + "|".join(re.escape(p) for p in phrases) + r")(?![\\w])",
+        r"(?<![\w])(?:" + "|".join(re.escape(p) for p in phrases) + r")(?![\w])",
         re.IGNORECASE,
     )
     missing = re.compile(
-        r"\\b(?:no|none|not|without|missing|unknown|undisclosed|"
-        r"unavailable|unreported|unspecified|lacking|lack|absent)\\b",
+        r"\b(?:no|none|not|without|missing|unknown|undisclosed|"
+        r"unavailable|unreported|unspecified|lacking|lack|absent)\b",
         re.IGNORECASE,
     )
     disclosure = re.compile(
-        r"\\b(?:is|are|was|were|has|have|had|grew|declined|"
+        r"\b(?:is|are|was|were|has|have|had|grew|declined|"
         r"includes?|provides?|offers?|sells?|builds?|targets?|uses?|"
         r"raised|launched|reported|generates?|faces?|requires?|"
         r"signed|operates?|serves?|automates?|addresses?|drives?|"
         r"achieved|works?|combines?|priced|founded|completed|"
-        r"measures?|estimated|led|partners?|customers?)\\b",
+        r"measures?|estimated|led|partners?|customers?)\b",
         re.IGNORECASE,
     )
-    for sentence in re.split(r"(?<=[.!?])\\s+|[\\r\\n;]+", text):
-        for clause in re.split(r"\\b(?:but|however|although|whereas)\\b", sentence, flags=re.IGNORECASE):
+    for sentence in re.split(r"(?<=[.!?])\s+|[\r\n;]+", text):
+        for clause in re.split(r"\b(?:but|however|although|whereas)\b", sentence, flags=re.IGNORECASE):
             if not expression.search(clause) or missing.search(clause):
                 continue
             # Bare headings/keyword collections are not business disclosures.
-            if len(re.findall(r"\\b[\\w-]+\\b", clause)) < 4:
+            if len(re.findall(r"\b[\w-]+\b", clause)) < 4:
                 continue
-            if disclosure.search(clause) or re.search(r"[$%\\d]", clause):
+            if disclosure.search(clause) or re.search(r"[$%\d]", clause):
                 return True
     return False
 
