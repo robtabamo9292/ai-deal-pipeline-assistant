@@ -234,11 +234,11 @@ def _draw_metric_card(
     font_size = _fit_font_size(
         clean_value,
         "Helvetica-Bold",
-        max_size=11.5 if label != "PRIORITY" else 9.0,
+        max_size=11.5 if label != "REVIEW" else 9.0,
         min_size=6.7,
         max_width=width - 12,
     )
-    value_color = _priority_color(clean_value) if label == "PRIORITY" else NAVY
+    value_color = _priority_color(clean_value) if label == "REVIEW" else NAVY
     pdf.setFillColor(value_color)
     pdf.setFont("Helvetica-Bold", font_size)
     pdf.drawCentredString(x + width / 2, y + 13, clean_value)
@@ -337,9 +337,9 @@ def memo_to_pdf_bytes(memo: Any) -> bytes:
     )
 
     metrics = [
-        ("SCORE", f"{memo.opportunity_score}/100"),
-        ("PRIORITY", _clean(memo.priority)),
-        ("CONFIDENCE", f"{memo.confidence_score}/100"),
+        ("EVIDENCE", f"{memo.opportunity_score}/100"),
+        ("REVIEW", _clean(memo.priority)),
+        ("COVERAGE", f"{memo.confidence_score}/100"),
     ]
     card_y = header_y + 12
     for idx, (label, value) in enumerate(metrics):
@@ -374,7 +374,7 @@ def memo_to_pdf_bytes(memo: Any) -> bytes:
 
     pdf.setFont("Helvetica-Bold", 10.5)
     pdf.setFillColor(TEXT)
-    pdf.drawString(left_x, section_top, "Investment Case")
+    pdf.drawString(left_x, section_top, "Investment Context")
     left_y = section_top - 15
     thesis = _unique_items(memo.investment_thesis, limit=3, max_chars=300)
     left_y = _draw_bullets(
@@ -388,7 +388,7 @@ def memo_to_pdf_bytes(memo: Any) -> bytes:
 
     pdf.setFont("Helvetica-Bold", 10.5)
     pdf.setFillColor(TEXT)
-    pdf.drawString(right_x, section_top, "Evidence & Business Model")
+    pdf.drawString(right_x, section_top, "Business Model & Evidence")
     right_y = section_top - 15
     evidence = _split_evidence_snapshot(memo.traction_and_customers)
     right_y = _draw_bullets(
