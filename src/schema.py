@@ -13,6 +13,25 @@ class DiligenceScorecardItem(BaseModel):
     diligence_question: str = Field(default="Unknown")
 
 
+class EvidenceExcerpt(BaseModel):
+    """Model-proposed claim and exact source quotation (not verified facts)."""
+
+    model_config = ConfigDict(extra="forbid")
+    category: str
+    claim: str
+    quote: str
+
+
+class SourceMatch(BaseModel):
+    """Application-owned text-match result requiring further analyst review."""
+
+    category: str
+    claim: str
+    quote: str
+    exact_text_match: bool = False
+    review_status: str = "Needs analyst review"
+
+
 class DealExtraction(BaseModel):
     """
     Narrow schema for model-controlled extraction output.
@@ -31,6 +50,7 @@ class DealExtraction(BaseModel):
     stage: str = Field(default="Unknown")
     description: str = Field(default="Unknown")
 
+    evidence_excerpts: List[EvidenceExcerpt] = Field(default_factory=list)
     traction_signals: List[str] = Field(default_factory=list)
     customer_signals: List[str] = Field(default_factory=list)
     funding_signals: List[str] = Field(default_factory=list)
@@ -49,6 +69,9 @@ class DealRecord(BaseModel):
     business_model: str = Field(default="Unknown")
     stage: str = Field(default="Unknown")
     description: str = Field(default="Unknown")
+
+    evidence_excerpts: List[EvidenceExcerpt] = Field(default_factory=list)
+    source_matches: List[SourceMatch] = Field(default_factory=list)
 
     traction_signals: List[str] = Field(default_factory=list)
     customer_signals: List[str] = Field(default_factory=list)

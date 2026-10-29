@@ -44,7 +44,22 @@ def main() -> None:
             risks=_split(case.risks),
         )
         deal = apply_vc_scorecard(deal, case.notes)
+        # Explicit invariants protect against broad-band evaluation false positives.
+        zero_categories = {
+            "E02": {
+                "Founder / Team Evidence", "Traction / PMF Evidence",
+                "Business Model Evidence", "GTM Evidence", "Risk Evidence",
+            },
+            "E11": {item.category for item in deal.diligence_scorecard},
+            "E12": {item.category for item in deal.diligence_scorecard},
+        }.get(case.case_id, set())
+        zero_checks_passed = all(
+            item.score == 0
+            for item in deal.diligence_scorecard
+            if item.category in zero_categories
+        )
         passed = (
+            zero_checks_passed and
             case.expected_min_score
             <= deal.opportunity_score
             <= case.expected_max_score
@@ -58,6 +73,7 @@ def main() -> None:
                 "expected_min_score": case.expected_min_score,
                 "expected_max_score": case.expected_max_score,
                 "expected_status": case.expected_status,
+                "zero_checks_passed": zero_checks_passed,
                 "passed": passed,
             }
         )

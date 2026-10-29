@@ -32,6 +32,7 @@ def scorecard_dataframe(scorecard) -> pd.DataFrame:
                 "Category": item.category,
                 "Evidence Score": item.score,
                 "Maximum": item.max_score,
+                "Coverage %": round(item.score / item.max_score * 100) if item.max_score else 0,
                 "Coverage": item.evidence_level,
                 "What the score means": item.rationale,
                 "Priority diligence question": item.diligence_question,
@@ -51,7 +52,7 @@ def render_metrics(deal) -> None:
     cards = [
         (
             "Evidence completeness",
-            f"{deal.opportunity_score}/100",
+            "Not scored" if deal.fallback_used else f"{deal.opportunity_score}/100",
             f"{covered} of {len(scorecard)} categories covered",
         ),
         (
@@ -60,9 +61,9 @@ def render_metrics(deal) -> None:
             "Not an investment recommendation",
         ),
         (
-            "Extraction confidence",
-            f"{deal.confidence_score}/100",
-            "Completeness, not verified truth",
+            "Record completeness",
+            "Not scored" if deal.fallback_used else f"{deal.confidence_score}/100",
+            "Field coverage, not verified truth",
         ),
         (
             "Strong evidence",
@@ -107,14 +108,22 @@ def render_provenance(deal) -> None:
 
 
 def render_result(deal) -> None:
+    if deal.fallback_used:
+        st.warning(
+            "AI extraction did not run. No investment evidence was scored; "
+            "configure the AI service or use the curated offline demo."
+        )
+        render_provenance(deal)
+        return
     render_metrics(deal)
     render_provenance(deal)
 
-    scorecard_tab, summary_tab, risks_tab, fields_tab, export_tab = st.tabs(
+    scorecard_tab, summary_tab, risks_tab, sources_tab, fields_tab, export_tab = st.tabs(
         [
             "Evidence Scorecard",
             "Executive Summary",
             "Risks & Questions",
+            "Source Excerpts",
             "Structured Fields",
             "Export",
         ]
@@ -135,17 +144,17 @@ def render_result(deal) -> None:
                 width="stretch",
                 hide_index=True,
                 column_config={
-                    "Evidence Score": st.column_config.ProgressColumn(
-                        "Evidence Score",
+                    "Coverage %": st.column_config.ProgressColumn(
+                        "Coverage %",
                         min_value=0,
-                        max_value=15,
-                        format="%d",
+                        max_value=100,
+                        format="%d%%",
                     )
                 },
             )
 
     with summary_tab:
-        st.subheader("Investment thesis")
+        st.subheader("Company overview — extracted from notes")
         st.write(clean_text(deal.description))
         st.subheader("Recommended next step")
         st.write(clean_text(deal.recommended_next_step))
@@ -156,14 +165,14 @@ def render_result(deal) -> None:
                 "No supported traction evidence provided."
             ]
             for item in items:
-                st.markdown(f"- {item}")
+                st.markdown("- " + item.replace("$", r"\$"))
         with right:
             st.markdown("#### Customer evidence")
             items = clean_list(deal.customer_signals) or [
                 "No supported customer evidence provided."
             ]
             for item in items:
-                st.markdown(f"- {item}")
+                st.markdown("- " + item.replace("$", r"\$"))
 
     with risks_tab:
         left, right = st.columns(2)
@@ -178,6 +187,30 @@ def render_result(deal) -> None:
             for index, item in enumerate(questions, start=1):
                 with st.expander(f"Question {index}: {item[:90]}"):
                     st.write(item)
+
+    with sources_tab:
+        st.caption(
+            "A matched quotation only establishes that words appear in the "
+            "submitted notes. Whether the passage supports a claim, or "
+            "whether the claim is true, requires separate review."
+        )
+        if deal.source_matches:
+            st.dataframe(
+                pd.DataFrame([
+                    {
+                        "Category": match.category,
+                        "Extracted claim": match.claim,
+                        "Quoted source text": match.quote,
+                        "Text match": "Found" if match.exact_text_match else "Not found",
+                        "Review status": match.review_status,
+                    }
+                    for match in deal.source_matches
+                ]),
+                width="stretch",
+                hide_index=True,
+            )
+        else:
+            st.info("No source quotations were returned for this analysis.")
 
     with fields_tab:
         fields = {
