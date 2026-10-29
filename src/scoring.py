@@ -57,21 +57,33 @@ def _is_fact_bearing(clause: str) -> bool:
     """
     True when a clause states something specific about the company.
 
-    Requires either a figure, or at least two content words outside the
-    rubric vocabulary, and rejects clauses that are mostly rubric keywords.
+    Requires a figure, a named entity or acronym (e.g. "Salesforce", "CFO"),
+    or at least two content words outside the rubric vocabulary, and rejects
+    clauses that are mostly rubric keywords.
     """
     # Ignore a leading heading such as "Go-to-market:"; it is formatting.
     body = re.sub(r"^\s*[A-Za-z][\w /&-]{0,30}:\s*", "", clause)
-    words = [word.lower() for word in re.findall(r"[A-Za-z0-9$%][\w$%.,'-]*", body)]
-    content = [word.strip(".,'") for word in words if word.strip(".,'") not in _STOPWORDS]
+    tokens = [token.strip(".,'") for token in re.findall(r"[A-Za-z0-9$%][\w$%.,'-]*", body)]
+    content = [token for token in tokens if token and token.lower() not in _STOPWORDS]
     if not content:
         return False
-    outside = [word for word in content if not _in_vocabulary(word)]
-    has_figure = any(re.search(r"\d", word) for word in content)
+    outside = [token for token in content if not _in_vocabulary(token.lower())]
+    has_figure = any(re.search(r"\d", token) for token in content)
+    # A specific company, product or role: capitalized mid-sentence, or an
+    # acronym such as CFO or HIPAA. Sentence-initial capitals do not count.
+    has_entity = any(
+        not _in_vocabulary(token.lower())
+        and token.lower() not in _STOPWORDS
+        and (
+            (len(token) >= 2 and token.isupper() and token.isalpha())
+            or (index > 0 and token[:1].isupper())
+        )
+        for index, token in enumerate(tokens)
+    )
     vocabulary_share = 1 - len(outside) / len(content)
     if vocabulary_share > 0.7 and not has_figure:
         return False
-    return has_figure or len(outside) >= 2
+    return has_figure or has_entity or len(outside) >= 2
 
 
 def _clean_text(value) -> str:

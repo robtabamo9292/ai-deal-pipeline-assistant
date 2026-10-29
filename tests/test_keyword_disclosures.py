@@ -71,6 +71,10 @@ def test_deferred_information_counts_as_missing(sentence):
             "billing-services partners.",
             ["outbound"],
         ),
+        # A single named company or role is a specific disclosure (Codex review, #17).
+        ("Our competitor is Salesforce.", ["competitor"]),
+        ("The economic buyer is CFO.", ["economic buyer"]),
+        ("The decision maker is the VP of Operations.", ["decision maker"]),
     ],
 )
 def test_specific_disclosures_still_count(sentence, phrases):
