@@ -2,6 +2,8 @@ import streamlit as st
 from dotenv import load_dotenv
 
 from src.analysis_service import analyze_deal
+from src.intake import source_notes_for_analysis
+from src.demo import curated_northstar_example
 from src.export import create_pipeline_dataframe
 from src.sample_data import REAL_SAMPLE_DEALS
 from src.ui.components import render_result
@@ -89,7 +91,12 @@ def _remember_analyzed_deal(deal, notes: str) -> None:
 
 def run_analysis() -> None:
     # Form metadata is NOT evidence and must never affect the scoring rubric.
-    raw_notes = st.session_state.company_notes.strip()
+    raw_notes = source_notes_for_analysis(
+        st.session_state.company_notes,
+        company_name=st.session_state.company_name,
+        source_type=st.session_state.source_type,
+        investment_focus=st.session_state.investment_focus,
+    )
     with st.spinner("Extracting and reviewing documented information..."):
         result = analyze_deal(raw_notes)
 
@@ -197,6 +204,21 @@ with tab_deal:
             disabled=sample_name == "Select a sample",
         ):
             load_sample(sample_name)
+            st.rerun()
+
+        if st.button("Preview fictional case (no API key)", width="stretch"):
+            demo_name = "Northstar Health - Fictional Workflow SaaS"
+            load_sample(demo_name)
+            demo_notes = source_notes_for_analysis(
+                st.session_state.company_notes,
+                company_name=st.session_state.company_name,
+                source_type=st.session_state.source_type,
+                investment_focus=st.session_state.investment_focus,
+            )
+            demo_deal = curated_northstar_example(demo_notes)
+            st.session_state.latest_deal = demo_deal
+            st.session_state.analysis_complete = True
+            _remember_analyzed_deal(demo_deal, demo_notes)
             st.rerun()
 
         st.text_input(
