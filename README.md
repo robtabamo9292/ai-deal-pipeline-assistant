@@ -1,5 +1,17 @@
 # DealFlow AI — Private-Market Diligence Workspace
 
+**[Launch Streamlit demo](https://ai-deal-pipeline-assistant-iaersbqy54j5dbbknbsui8.streamlit.app/)** · [View automated checks](https://github.com/robtabamo9292/ai-deal-pipeline-assistant/actions)
+
+### Review in two minutes
+
+1. Open the demo and select **Preview fictional case (no API key)**.
+2. Inspect the evidence scorecard, extracted fields, questions and PDF brief.
+3. Note that the example is **manually curated from a fictional source**—it does not demonstrate live model extraction or independently verified facts.
+4. To run real AI extraction locally, configure an OpenAI API key and use **Analyze deal**.
+
+**Scoring disclosure:** The v2 rubric is a conservative heuristic intended for research triage, not investment quality, independently checked evidence, or an institution-certified diligence process. This release addresses keyword substring collisions, missing-disclosure scoring, metadata leakage and fallback misclassification. Formal claim-by-claim source verification and live-model accuracy benchmarking remain future work.
+
+
 DealFlow AI is a Streamlit application that converts unstructured company notes into structured diligence evidence, prioritized information gaps, CRM-ready pipeline records, and a downloadable one-page investment brief.
 
 The project demonstrates an end-to-end AI workflow for venture sourcing, private-market screening, analyst research, and business-operations automation.
@@ -31,7 +43,7 @@ The deterministic rubric evaluates documented evidence across:
 - Competition
 - Material risks
 
-Missing evidence receives zero points. The scoring method is documented and evaluated against a set of complete, partial, minimal, negative, and risk-heavy examples.
+Missing disclosures should receive zero points under the revised conservative heuristic. The scoring method is documented and evaluated with an additional set of adversarial, negative, and keyword-stuffing tests. It is not a substitute for source-level or semantic claim verification.
 
 ## Key features
 
@@ -95,7 +107,7 @@ OPENAI_MODEL=gpt-4o-mini
 OPENAI_AGENT_MODEL=gpt-4o-mini
 ```
 
-When no API key is configured, the application uses an explicitly labeled deterministic fallback record instead of presenting the result as AI-generated.
+When no API key is configured, AI extraction returns an explicitly labeled **Not analyzed / Not scored** record. The one-click fictional offline demo is separate, with manually curated fields clearly labeled as such.
 
 ## Tests and evaluation
 
@@ -169,7 +181,9 @@ The evaluation set contains ten labeled examples spanning complete, partial, min
 - The application does not independently verify claims, financial figures, customers, funding rounds, or market data.
 - The evidence score measures documentation completeness, not company quality.
 - Extraction confidence measures record completeness, not factual truth.
-- The current pipeline is session-based and is not a permanent CRM or database.
+- The current pipeline is session-based and is not a permanent CRM or database. Repeat analyses with the same company and notes replace the corresponding in-session record.
+- The offline demo uses manually curated fictional fields and does not validate the live AI model.
+- Missing-information and substring false positives are mitigated by conservative lexical rules, but these rules are not a full natural-language entailment or citation validation system.
 - All generated analysis requires human review and primary-source diligence.
 
 ## Project status
