@@ -52,6 +52,7 @@ Missing disclosures should receive zero points under the revised conservative he
 - Standard OpenAI and optional OpenAI Agents SDK analysis paths
 - Pydantic-validated structured records
 - Deterministic evidence-completeness scorecard
+- Source Excerpts review panel: exact source-text matching and unresolved human-review status (not proof of semantic support)
 - Explicit analysis-path, model, fallback, prompt-version, and timestamp metadata
 - Targeted diligence questions based on evidence gaps
 - Session-based deal pipeline
@@ -137,8 +138,10 @@ The automated test suite covers:
 - Agents SDK failure and fallback routing
 - Export provenance fields
 - PDF generation
+- Adversarial negation, keyword-stuffing and source quotation matching
+- Headless Streamlit offline-demo smoke test
 
-The evaluation set contains ten labeled examples spanning complete, partial, minimal, negative, team-only, traction-only, economics-heavy, and risk-heavy notes. Current expected cases pass the deterministic rubric.
+The evaluation set contains twelve labeled examples, including complete, partial, minimal, negative, keyword-stuffing and explicitly missing information. The revised expected bands and category-level zero-credit checks reflect more conservative scoring. These do not evaluate live model factual accuracy.
 
 ## Repository structure
 
@@ -180,7 +183,7 @@ The evaluation set contains ten labeled examples spanning complete, partial, min
 - Do not submit confidential, regulated, or personally identifiable information without authorization.
 - The application does not independently verify claims, financial figures, customers, funding rounds, or market data.
 - The evidence score measures documentation completeness, not company quality.
-- Extraction confidence measures record completeness, not factual truth.
+- The displayed record completeness metric is an uncalibrated coverage proxy, not extraction precision, semantic accuracy, or factual truth.
 - The current pipeline is session-based and is not a permanent CRM or database. Repeat analyses with the same company and notes replace the corresponding in-session record.
 - The offline demo uses manually curated fictional fields and does not validate the live AI model.
 - Missing-information and substring false positives are mitigated by conservative lexical rules, but these rules are not a full natural-language entailment or citation validation system.
