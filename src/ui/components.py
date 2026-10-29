@@ -118,11 +118,12 @@ def render_result(deal) -> None:
     render_metrics(deal)
     render_provenance(deal)
 
-    scorecard_tab, summary_tab, risks_tab, fields_tab, export_tab = st.tabs(
+    scorecard_tab, summary_tab, risks_tab, sources_tab, fields_tab, export_tab = st.tabs(
         [
             "Evidence Scorecard",
             "Executive Summary",
             "Risks & Questions",
+            "Source Excerpts",
             "Structured Fields",
             "Export",
         ]
@@ -186,6 +187,30 @@ def render_result(deal) -> None:
             for index, item in enumerate(questions, start=1):
                 with st.expander(f"Question {index}: {item[:90]}"):
                     st.write(item)
+
+    with sources_tab:
+        st.caption(
+            "A matched quotation only establishes that words appear in the "
+            "submitted notes. Whether the passage supports a claim, or "
+            "whether the claim is true, requires separate review."
+        )
+        if deal.source_matches:
+            st.dataframe(
+                pd.DataFrame([
+                    {
+                        "Category": match.category,
+                        "Extracted claim": match.claim,
+                        "Quoted source text": match.quote,
+                        "Text match": "Found" if match.exact_text_match else "Not found",
+                        "Review status": match.review_status,
+                    }
+                    for match in deal.source_matches
+                ]),
+                width="stretch",
+                hide_index=True,
+            )
+        else:
+            st.info("No source quotations were returned for this analysis.")
 
     with fields_tab:
         fields = {
