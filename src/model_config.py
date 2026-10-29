@@ -23,7 +23,7 @@ DEFAULT_REASONING_EFFORT = "low"
 VALID_REASONING_EFFORTS = {"none", "low", "medium", "high"}
 
 # Models that do not accept a reasoning effort and still use temperature.
-_NON_REASONING_PREFIXES = ("gpt-4", "gpt-3.5")
+_NON_REASONING_PREFIXES = ("gpt-4", "gpt-3.5", "chatgpt-4o")
 
 LEGACY_MAX_TOKENS = 1900
 # Reasoning tokens count toward this limit, so it needs headroom beyond the
@@ -39,8 +39,16 @@ def agent_model() -> str:
     return (os.getenv("OPENAI_AGENT_MODEL") or "").strip() or standard_model()
 
 
+def base_model(model: str) -> str:
+    """Base model of a fine-tuned ID, e.g. ft:gpt-4.1-mini-2025-04-14:org::id."""
+    name = model.strip().lower()
+    if name.startswith("ft:"):
+        return name.split(":")[1] if name.count(":") >= 1 else name
+    return name
+
+
 def is_reasoning_model(model: str) -> bool:
-    return not model.strip().lower().startswith(_NON_REASONING_PREFIXES)
+    return not base_model(model).startswith(_NON_REASONING_PREFIXES)
 
 
 def reasoning_effort() -> str:

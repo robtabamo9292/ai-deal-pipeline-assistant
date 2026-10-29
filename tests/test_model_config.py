@@ -46,6 +46,24 @@ def test_legacy_model_keeps_temperature_settings():
     assert settings == {"temperature": 0.2, "max_tokens": 1900}
 
 
+@pytest.mark.parametrize(
+    ("model", "reasoning"),
+    [
+        ("gpt-6-luna", True),
+        ("o3-mini", True),
+        ("gpt-4o-mini", False),
+        ("gpt-4.1-mini", False),
+        ("chatgpt-4o-latest", False),
+        # Fine-tuned IDs are classified by their base model (Codex review, #18).
+        ("ft:gpt-4.1-mini-2025-04-14:org:custom:abc123", False),
+        ("ft:gpt-4o-mini-2024-07-18:org::xyz", False),
+        ("ft:gpt-6-luna:org:custom:abc123", True),
+    ],
+)
+def test_reasoning_classification(model, reasoning):
+    assert model_config.is_reasoning_model(model) is reasoning
+
+
 def test_invalid_reasoning_effort_falls_back_to_low(monkeypatch):
     monkeypatch.setenv("OPENAI_REASONING_EFFORT", "extreme")
     assert model_config.reasoning_effort() == "low"
