@@ -4,6 +4,7 @@ from typing import Any
 
 from dotenv import load_dotenv
 
+from src.model_config import agent_model, agent_model_settings
 from src.schema import DealExtraction, DealRecord
 from src.scoring import apply_vc_scorecard, fallback_deal_record
 
@@ -89,17 +90,15 @@ def _serialize_source_notes(raw_notes: str) -> str:
     )
 
 
-MODEL = (
-    os.getenv("OPENAI_AGENT_MODEL")
-    or os.getenv("OPENAI_MODEL")
-    or "gpt-4o-mini"
-)
+MODEL = agent_model()
+_MODEL_SETTINGS = agent_model_settings(MODEL)
 
 
 if Agent is not None:
     dealflow_agent = Agent(
         name="DealFlow Analyst Agent",
         model=MODEL,
+        **({"model_settings": _MODEL_SETTINGS} if _MODEL_SETTINGS is not None else {}),
         instructions="""
 Convert the submitted source data into a DealExtraction.
 

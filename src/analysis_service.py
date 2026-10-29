@@ -1,8 +1,8 @@
 import logging
-import os
 from dataclasses import dataclass
 
 from src.llm import analyze_deal_with_llm
+from src.model_config import agent_model, standard_model
 from src.schema import DealRecord
 
 logger = logging.getLogger(__name__)
@@ -22,9 +22,7 @@ def analyze_deal(raw_notes: str) -> AnalysisResult:
         deal = analyze_deal_with_agents(raw_notes)
         if not deal.fallback_used:
             deal.analysis_path = "agents_sdk"
-            deal.model_name = os.getenv("OPENAI_AGENT_MODEL") or os.getenv(
-                "OPENAI_MODEL", "gpt-4o-mini"
-            )
+            deal.model_name = agent_model()
         return AnalysisResult(deal=deal)
     except Exception as exc:
         logger.warning(
@@ -37,7 +35,7 @@ def analyze_deal(raw_notes: str) -> AnalysisResult:
         deal = analyze_deal_with_llm(raw_notes)
         if not deal.fallback_used:
             deal.analysis_path = "openai_chat_completions"
-            deal.model_name = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+            deal.model_name = standard_model()
             deal.analysis_warning = (
                 "The preferred Agents SDK path was unavailable; "
                 "the standard OpenAI path was used."

@@ -104,9 +104,12 @@ Add your API key and preferred models to `.env`:
 
 ```env
 OPENAI_API_KEY=your_api_key_here
-OPENAI_MODEL=gpt-4o-mini
-OPENAI_AGENT_MODEL=gpt-4o-mini
+OPENAI_MODEL=gpt-6-luna
+OPENAI_AGENT_MODEL=gpt-6-luna
+OPENAI_REASONING_EFFORT=low
 ```
+
+The default model is `gpt-6-luna`, OpenAI's replacement for `gpt-4o-mini`, which shuts down on January 14, 2027. Luna is a reasoning model; the app sends it a reasoning effort (default `low`, enough for extraction from short notes) instead of a temperature. Older models such as `gpt-4o-mini` still work by changing `OPENAI_MODEL`, and the app adjusts the request settings automatically.
 
 When no API key is configured, AI extraction returns an explicitly labeled **Not analyzed / Not scored** record. The one-click fictional offline demo is separate, with manually curated fields clearly labeled as such.
 

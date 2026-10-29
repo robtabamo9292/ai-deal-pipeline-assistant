@@ -9,6 +9,7 @@ try:
 except ImportError:
     OpenAI = None
 
+from src.model_config import chat_completion_settings, standard_model
 from src.schema import DealExtraction, DealRecord
 from src.scoring import apply_vc_scorecard, fallback_deal_record
 
@@ -65,7 +66,7 @@ def analyze_deal_with_llm(raw_notes: str) -> DealRecord:
         raise ValueError("Deal notes cannot be empty.")
 
     api_key = (os.getenv("OPENAI_API_KEY") or "").strip()
-    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+    model = standard_model()
 
     if not api_key:
         fallback = fallback_deal_record(normalized_notes)
@@ -175,8 +176,9 @@ SOURCE_DATA_JSON:
             },
         ],
         response_format={"type": "json_object"},
-        temperature=0.2,
-        max_tokens=1900,
+        # Reasoning models (default gpt-6-luna) take reasoning_effort and
+        # max_completion_tokens; older models keep temperature and max_tokens.
+        **chat_completion_settings(model),
     )
 
     data = _extract_json(
