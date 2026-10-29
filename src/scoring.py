@@ -7,7 +7,7 @@ from src.schema import DealRecord, DiligenceScorecardItem
 UNKNOWN_VALUES = {
     "", "unknown", "n/a", "none", "not provided", "not available",
     "not disclosed", "undisclosed", "unspecified", "no information",
-    "not yet known",
+    "not yet known", "needs review", "requires review",
 }
 
 
