@@ -9,7 +9,7 @@
 3. Note that the example is **manually curated from a fictional source**—it does not demonstrate live model extraction or independently verified facts.
 4. To run real AI extraction locally, configure an OpenAI API key and use **Analyze deal**.
 
-**Scoring disclosure:** The v2 rubric is a conservative heuristic intended for research triage, not investment quality, independently checked evidence, or an institution-certified diligence process. This release addresses keyword substring collisions, missing-disclosure scoring, metadata leakage and fallback misclassification. Formal claim-by-claim source verification and live-model accuracy benchmarking remain future work.
+**Scoring disclosure:** The v2 rubric is a conservative heuristic intended for research triage, not investment quality, independently checked evidence, or an institution-certified diligence process. This release addresses keyword substring collisions, missing-disclosure scoring, metadata leakage and fallback misclassification, and extracted signals now earn credit only when the submitted notes back them. Semantic claim verification and live-model accuracy benchmarking remain future work.
 
 
 DealFlow AI is a Streamlit application that converts unstructured company notes into structured diligence evidence, prioritized information gaps, CRM-ready pipeline records, and a downloadable one-page investment brief.
@@ -43,7 +43,9 @@ The deterministic rubric evaluates documented evidence across:
 - Competition
 - Material risks
 
-Missing disclosures should receive zero points under the revised conservative heuristic. The scoring method is documented and evaluated with an additional set of adversarial, negative, and keyword-stuffing tests. It is not a substitute for source-level or semantic claim verification.
+Missing disclosures should receive zero points under the revised conservative heuristic. The scoring method is documented and evaluated with an additional set of adversarial, negative, and keyword-stuffing tests. It is not a substitute for semantic claim verification.
+
+**Source-backed signals only.** Traction, customer and risk signals produced by the model earn points only when the submitted notes back them: every figure in the signal must appear in the notes (`$420K` matches `$420,000`), together with at least one of its words, and a signal without figures needs most of its words in the notes. Signals that fail this check are kept for review, listed in the Source Excerpts panel and the CSV export as unsupported, and score zero. A hallucinated metric therefore cannot raise the score.
 
 ## Key features
 
@@ -52,6 +54,7 @@ Missing disclosures should receive zero points under the revised conservative he
 - Standard OpenAI and optional OpenAI Agents SDK analysis paths
 - Pydantic-validated structured records
 - Deterministic evidence-completeness scorecard
+- Source-support check: extracted signals not found in the notes are flagged and earn no credit
 - Source Excerpts review panel: exact source-text matching and unresolved human-review status (not proof of semantic support)
 - Explicit analysis-path, model, fallback, prompt-version, and timestamp metadata
 - Targeted diligence questions based on evidence gaps
@@ -80,7 +83,7 @@ flowchart LR
     H --> K[One-Page PDF Brief]
 ```
 
-The language model extracts and organizes information. Python then applies a transparent evidence rubric. AI execution provenance is retained so users can see which path produced the record and whether fallback logic was used.
+The language model extracts and organizes information. Python then checks each extracted signal against the source notes and applies a transparent evidence rubric to the signals that pass. AI execution provenance is retained so users can see which path produced the record and whether fallback logic was used.
 
 ## Public sample mode
 
@@ -142,6 +145,7 @@ The automated test suite covers:
 - Export provenance fields
 - PDF generation
 - Adversarial negation, keyword-stuffing and source quotation matching
+- Zero credit for signals absent from the notes, including changed figures
 - Headless Streamlit offline-demo smoke test
 
 The evaluation set contains twelve labeled examples, including complete, partial, minimal, negative, keyword-stuffing and explicitly missing information. The revised expected bands and category-level zero-credit checks reflect more conservative scoring. These do not evaluate live model factual accuracy.
@@ -152,25 +156,37 @@ The evaluation set contains twelve labeled examples, including complete, partial
 .
 ├── app.py
 ├── src/
-│   ├── analysis_service.py
-│   ├── agent_workflow.py
-│   ├── export.py
-│   ├── llm.py
-│   ├── memo.py
-│   ├── memo_pdf_v2.py
-│   ├── memo_schema.py
+│   ├── analysis_service.py     # chooses the AI path and records provenance
+│   ├── agent_workflow.py       # OpenAI Agents SDK path
+│   ├── llm.py                  # standard OpenAI path
+│   ├── model_config.py         # model selection and request settings
+│   ├── intake.py               # keeps metadata out of scored notes
+│   ├── schema.py               # Pydantic models
+│   ├── verification.py         # quote matching and signal source-support
+│   ├── scoring.py              # evidence-completeness rubric
+│   ├── demo.py                 # curated fictional offline demo
 │   ├── sample_data.py
-│   ├── schema.py
-│   ├── scoring.py
+│   ├── export.py               # CSV export with formula-injection guard
+│   ├── memo.py
+│   ├── memo_schema.py
+│   ├── memo_pdf_v2.py          # one-page PDF brief
 │   └── ui/
 │       ├── components.py
+│       ├── memo_view.py
 │       └── styles.py
 ├── tests/
-│   └── test_core.py
+│   ├── test_core.py
+│   ├── test_reliability.py
+│   ├── test_keyword_disclosures.py
+│   ├── test_source_matches.py
+│   ├── test_source_support.py
+│   ├── test_model_config.py
+│   └── test_app_smoke.py
 ├── eval/
 │   ├── eval_set.csv
 │   ├── eval_results.csv
-│   └── run_eval.py
+│   ├── run_eval.py
+│   └── README.md
 ├── data/
 │   ├── sample_inputs.csv
 │   └── sample_outputs.csv
@@ -190,6 +206,8 @@ The evaluation set contains twelve labeled examples, including complete, partial
 - The current pipeline is session-based and is not a permanent CRM or database. Repeat analyses with the same company and notes replace the corresponding in-session record.
 - The offline demo uses manually curated fictional fields and does not validate the live AI model.
 - Missing-information and substring false positives are mitigated by conservative lexical rules, but these rules are not a full natural-language entailment or citation validation system.
+- The source-support check is lexical and errs toward withholding credit: a signal paraphrased with different words (for example "growth" where the notes say "grew") can be flagged unsupported even when the notes back it. It confirms words and figures are present, not that the claim is true.
+- Several rubric categories still award points from keywords in the notes, so evidence described in unusual wording (such as "ex-Stripe payments lead" with no mention of founder or experience) can be missed. Classification fields such as sector and description are model-inferred and are not source-checked.
 - All generated analysis requires human review and primary-source diligence.
 
 ## Project status

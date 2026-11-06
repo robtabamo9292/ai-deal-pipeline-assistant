@@ -211,6 +211,14 @@ def render_result(deal) -> None:
             )
         else:
             st.info("No source quotations were returned for this analysis.")
+        if deal.unsupported_signals:
+            st.warning(
+                "These extracted signals were not found in the submitted notes "
+                "and earned no evidence credit:\n\n"
+                + "\n".join(
+                    "- " + item.replace("$", r"\$") for item in deal.unsupported_signals
+                )
+            )
 
     with fields_tab:
         fields = {

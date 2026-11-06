@@ -2,6 +2,7 @@ import re
 from typing import Iterable, List
 
 from src.schema import DealRecord, DiligenceScorecardItem
+from src.verification import split_supported
 
 
 UNKNOWN_VALUES = {
@@ -175,9 +176,11 @@ def _item(category: str, score: int, max_score: int, rationale: str, question: s
 def build_due_diligence_scorecard(deal: DealRecord, raw_notes: str) -> List[DiligenceScorecardItem]:
     """Measure evidence completeness, not investment attractiveness."""
     notes = _clean_text(raw_notes)
-    traction = _known_items(deal.traction_signals)
-    customers = _known_items(deal.customer_signals)
-    risks = _known_items(deal.risks)
+    # Only signals backed by the submitted notes earn points. A figure or claim
+    # the model produced that does not appear in the source scores zero.
+    traction, _ = split_supported(_known_items(deal.traction_signals), notes)
+    customers, _ = split_supported(_known_items(deal.customer_signals), notes)
+    risks, _ = split_supported(_known_items(deal.risks), notes)
 
     team_score = _score_parts([
         (_has_any(notes, ["founder", "co-founder", "ceo", "management team"]), 6),
@@ -287,6 +290,11 @@ def apply_vc_scorecard(deal: DealRecord, raw_notes: str) -> DealRecord:
 
     # Matching a quote does not verify its semantics or external truth.
     deal.source_matches = match_source_excerpts(deal.evidence_excerpts, raw_notes)
+    deal.unsupported_signals = [
+        signal
+        for values in (deal.traction_signals, deal.customer_signals, deal.risks)
+        for signal in split_supported(_known_items(values), raw_notes)[1]
+    ]
     scorecard = build_due_diligence_scorecard(deal, raw_notes)
     deal.diligence_scorecard = scorecard
     deal.opportunity_score = max(0, min(100, sum(item.score for item in scorecard)))

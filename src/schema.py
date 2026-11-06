@@ -80,6 +80,10 @@ class DealRecord(BaseModel):
     diligence_questions: List[str] = Field(default_factory=list)
     crm_tags: List[str] = Field(default_factory=list)
 
+    # Application-owned: extracted signals whose figures or words were not
+    # found in the source notes. They are kept for review but earn no points.
+    unsupported_signals: List[str] = Field(default_factory=list)
+
     relationship_context: str = Field(default="Unknown")
     recommended_next_step: str = Field(default="Unknown")
 
