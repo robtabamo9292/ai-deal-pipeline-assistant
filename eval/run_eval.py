@@ -50,6 +50,9 @@ def main() -> None:
                 "Founder / Team Evidence", "Traction / PMF Evidence",
                 "Business Model Evidence", "GTM Evidence", "Risk Evidence",
             },
+            # E05's extraction lists customer and risk signals that its notes
+            # say are not described; they must earn no evidence credit.
+            "E05": {"Customer / ICP Evidence", "Risk Evidence"},
             "E11": {item.category for item in deal.diligence_scorecard},
             "E12": {item.category for item in deal.diligence_scorecard},
         }.get(case.case_id, set())

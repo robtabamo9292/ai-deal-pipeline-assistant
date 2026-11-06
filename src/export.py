@@ -48,6 +48,7 @@ def create_pipeline_dataframe(deals):
             "customer_segments": _join_list(deal.customer_signals),
             "funding_signals": _join_list(deal.funding_signals),
             "risks": _join_list(deal.risks),
+            "unsupported_signals": _join_list(deal.unsupported_signals),
             "diligence_questions": _join_list(deal.diligence_questions),
             "crm_tags": _join_list(deal.crm_tags),
             "due_diligence_scorecard": _scorecard_summary(
