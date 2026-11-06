@@ -279,7 +279,13 @@ def calculate_confidence_score(deal: DealRecord, raw_notes: str, scorecard: List
     """Estimate extraction confidence from completeness, not factual truth."""
     key_fields = [deal.company_name, deal.sector, deal.subsector, deal.business_model, deal.stage, deal.description, deal.recommended_next_step]
     field_score = round(sum(_is_known(value) for value in key_fields) / len(key_fields) * 40)
-    signal_count = sum(len(_known_items(values)) for values in [deal.traction_signals, deal.customer_signals, deal.funding_signals, deal.risks, deal.diligence_questions])
+    # Signals the notes do not back count toward neither score.
+    checked = [
+        split_supported(_known_items(values), raw_notes)[0]
+        for values in (deal.traction_signals, deal.customer_signals, deal.risks)
+    ]
+    unchecked = [_known_items(deal.funding_signals), _known_items(deal.diligence_questions)]
+    signal_count = sum(len(values) for values in checked + unchecked)
     signal_score = min(30, signal_count * 3)
     notes_score = min(15, len(_clean_text(raw_notes)) // 200)
     evidence_score = round(sum(item.score / item.max_score for item in scorecard) / len(scorecard) * 15) if scorecard else 0

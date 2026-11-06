@@ -6,8 +6,9 @@ from src.schema import DealRecord, EvidenceExcerpt
 from src.scoring import apply_vc_scorecard
 
 
-def curated_northstar_example(notes: str) -> DealRecord:
-    deal = DealRecord(
+def _northstar_record() -> DealRecord:
+    """The curated fictional extraction, before scoring."""
+    return DealRecord(
         company_name="Northstar Health",
         sector="Healthcare Software",
         subsector="Prior-authorization workflow",
@@ -52,7 +53,10 @@ def curated_northstar_example(notes: str) -> DealRecord:
         model_name="none",
         prompt_version="not-run",
     )
-    return apply_vc_scorecard(deal, notes)
+
+
+def curated_northstar_example(notes: str) -> DealRecord:
+    return apply_vc_scorecard(_northstar_record(), notes)
 
 
 # Claims a model could plausibly invent: none of them appear in the notes.
@@ -68,12 +72,11 @@ def curated_planted_claims_example(notes: str) -> DealRecord:
     flagged as unsupported, the invented quote is not found, and the score
     matches the clean extraction because the planted claims earn nothing.
     """
-    clean = curated_northstar_example(notes)
-    deal = clean.model_copy(deep=True)
+    deal = _northstar_record()
     deal.company_name = "Northstar Health (planted claims)"
-    deal.traction_signals = clean.traction_signals + PLANTED_TRACTION
-    deal.customer_signals = clean.customer_signals + PLANTED_CUSTOMERS
-    deal.evidence_excerpts = clean.evidence_excerpts + [
+    deal.traction_signals += PLANTED_TRACTION
+    deal.customer_signals += PLANTED_CUSTOMERS
+    deal.evidence_excerpts += [
         EvidenceExcerpt(category="Traction", claim="ARR of $1.2M", quote=PLANTED_QUOTE)
     ]
     deal.analysis_path = "curated_offline_demo_planted_claims"

@@ -206,9 +206,9 @@ def render_result(deal) -> None:
                 pd.DataFrame([
                     {
                         "Category": match.category,
+                        "Text match": "Found" if match.exact_text_match else "Not found",
                         "Extracted claim": match.claim,
                         "Quoted source text": match.quote,
-                        "Text match": "Found" if match.exact_text_match else "Not found",
                         "Review status": match.review_status,
                     }
                     for match in deal.source_matches

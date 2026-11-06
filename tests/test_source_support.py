@@ -87,6 +87,7 @@ def test_planted_claims_add_no_evidence_credit():
     planted = curated_planted_claims_example(DEFAULT_SAMPLE_DEAL_NOTES)
     assert clean.unsupported_signals == []
     assert planted.opportunity_score == clean.opportunity_score
+    assert planted.confidence_score == clean.confidence_score
     assert [i.score for i in planted.diligence_scorecard] == [
         i.score for i in clean.diligence_scorecard
     ]
