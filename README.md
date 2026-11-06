@@ -1,18 +1,29 @@
 # DealFlow AI — Private-Market Diligence Workspace
 
+DealFlow AI turns unstructured company notes into a structured evidence review: what the notes document, what is missing, and which diligence questions to ask next, with a CRM-ready record and a one-page brief.
+
 **[Launch Streamlit demo](https://ai-deal-pipeline-assistant-iaersbqy54j5dbbknbsui8.streamlit.app/)** · [View automated checks](https://github.com/robtabamo9292/ai-deal-pipeline-assistant/actions)
+
+## Case study: a score should not trust its own extraction
+
+**Problem.** An AI extraction can state a metric the source never contains, and a score built on that extraction looks credible.
+
+**Finding.** I tested it. Four claims absent from the notes ($2.4M ARR, 140% net revenue retention, Fortune 500 CFOs and a competition risk) raised the evidence score from 6 to 28.
+
+**Fix.** A signal now earns credit only when the notes back it: every figure it states must appear in the notes (`$420K` matches `$420,000`) together with at least one of its words. Unsupported signals are kept for review, flagged in the app and the CSV export, and add nothing to either the evidence score or record completeness.
+
+**Proof.** [`tests/test_source_support.py`](tests/test_source_support.py) asserts that invented signals and changed figures earn zero, and the **Preview invented-claim check** demo shows it without an API key: three planted claims are flagged, an invented quote is marked not found, and the score stays at 68.
+
+<img src="assets/screenshots/source-check.png" alt="Invented-claim demo: three planted claims flagged as not found in the source notes and given no evidence credit" width="560">
 
 ### Review in two minutes
 
-1. Open the demo and select **Preview fictional case (no API key)**.
-2. Inspect the evidence scorecard, extracted fields, questions and PDF brief.
-3. Note that the example is **manually curated from a fictional source**—it does not demonstrate live model extraction or independently verified facts.
-4. To run real AI extraction locally, configure an OpenAI API key and use **Analyze deal**.
+1. Open the demo and select **Preview fictional case (no API key)** to see the curated Northstar extraction scored against its notes.
+2. Select **Preview invented-claim check (no API key)**: the same notes with three planted claims. Check the warning and the **Source Excerpts** tab.
+3. Inspect the evidence scorecard, risks and questions, and the PDF brief.
+4. Both previews are **manually curated from a fictional source**; neither runs a live model or verifies facts externally. To run real AI extraction locally, configure an OpenAI API key and use **Analyze deal**.
 
-**Scoring disclosure:** The v2 rubric is a conservative heuristic intended for research triage, not investment quality, independently checked evidence, or an institution-certified diligence process. This release addresses keyword substring collisions, missing-disclosure scoring, metadata leakage and fallback misclassification, and extracted signals now earn credit only when the submitted notes back them. Semantic claim verification and live-model accuracy benchmarking remain future work.
-
-
-DealFlow AI is a Streamlit application that converts unstructured company notes into structured diligence evidence, prioritized information gaps, CRM-ready pipeline records, and a downloadable one-page investment brief.
+**Scoring disclosure:** The rubric is a conservative heuristic for research triage, not a measure of investment quality, independently checked evidence, or an institution-certified diligence process. Semantic claim verification and live-model accuracy benchmarking remain future work.
 
 The project demonstrates an end-to-end AI workflow for venture sourcing, private-market screening, analyst research, and business-operations automation.
 
@@ -87,7 +98,7 @@ The language model extracts and organizes information. Python then checks each e
 
 ## Public sample mode
 
-The app includes built-in sample notes for public demonstration. A fictional healthcare workflow company is included so users can test the full workflow without relying on confidential company information.
+The app includes built-in sample notes for public demonstration. A fictional healthcare workflow company is included so users can test the full workflow without relying on confidential company information. Two offline previews use it: a curated extraction scored against its notes, and the same extraction with three planted claims to show the source check.
 
 The public samples are demonstrations, not verified investment research.
 
@@ -146,7 +157,8 @@ The automated test suite covers:
 - PDF generation
 - Adversarial negation, keyword-stuffing and source quotation matching
 - Zero credit for signals absent from the notes, including changed figures
-- Headless Streamlit offline-demo smoke test
+- Labeled lists ("Competition: A, B, C") and plural keywords count as disclosures; keyword-only and "none identified" lists do not
+- Headless Streamlit smoke tests that click both offline demos
 
 The evaluation set contains twelve labeled examples, including complete, partial, minimal, negative, keyword-stuffing and explicitly missing information. The revised expected bands and category-level zero-credit checks reflect more conservative scoring. These do not evaluate live model factual accuracy.
 

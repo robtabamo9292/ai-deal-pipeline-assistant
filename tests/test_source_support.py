@@ -1,4 +1,13 @@
 """Extracted signals earn evidence credit only when the source notes back them."""
+from src.demo import (
+    PLANTED_CUSTOMERS,
+    PLANTED_QUOTE,
+    PLANTED_TRACTION,
+    curated_northstar_example,
+    curated_planted_claims_example,
+)
+from src.export import create_pipeline_dataframe
+from src.sample_data import DEFAULT_SAMPLE_DEAL_NOTES
 from src.schema import DealRecord
 from src.scoring import apply_vc_scorecard
 from src.verification import is_source_supported
@@ -64,3 +73,27 @@ def test_paraphrased_signal_needs_most_of_its_words_in_notes():
     assert is_source_supported("Revenue-cycle teams", notes)
     assert not is_source_supported("Enterprise customers", notes)
     assert not is_source_supported("Hospital procurement teams", notes)
+
+
+def test_planted_claims_demo_flags_every_planted_claim():
+    record = curated_planted_claims_example(DEFAULT_SAMPLE_DEAL_NOTES)
+    assert record.unsupported_signals == PLANTED_TRACTION + PLANTED_CUSTOMERS
+    planted = next(m for m in record.source_matches if m.quote == PLANTED_QUOTE)
+    assert planted.exact_text_match is False
+
+
+def test_planted_claims_add_no_evidence_credit():
+    clean = curated_northstar_example(DEFAULT_SAMPLE_DEAL_NOTES)
+    planted = curated_planted_claims_example(DEFAULT_SAMPLE_DEAL_NOTES)
+    assert clean.unsupported_signals == []
+    assert planted.opportunity_score == clean.opportunity_score
+    assert planted.confidence_score == clean.confidence_score
+    assert [i.score for i in planted.diligence_scorecard] == [
+        i.score for i in clean.diligence_scorecard
+    ]
+
+
+def test_export_lists_unsupported_signals():
+    record = curated_planted_claims_example(DEFAULT_SAMPLE_DEAL_NOTES)
+    exported = create_pipeline_dataframe([record]).loc[0, "unsupported_signals"]
+    assert "Fortune 500 health systems" in exported

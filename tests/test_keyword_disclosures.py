@@ -81,6 +81,42 @@ def test_specific_disclosures_still_count(sentence, phrases):
     assert _has_any(sentence, phrases)
 
 
+COMPETITION = ["competitor", "competition", "incumbent", "alternative"]
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        # Analysts often write notes as labeled lists with no verb.
+        "Competition: Existing revenue-cycle vendors, EHR modules, and manual outsourcing firms.",
+        "Competition: Brex, Navan, Airbase, SAP Concur, and banks.",
+        # Plural keywords count.
+        "Competitors include EHR modules and manual outsourcing firms.",
+    ],
+)
+def test_labeled_lists_and_plurals_count_as_disclosures(line):
+    assert _has_any(line, COMPETITION)
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Competition: competitors, incumbents, alternatives.",
+        "Competition: none identified yet.",
+        "Competition: TBD after the partner meeting.",
+        "Competitors include incumbents.",
+    ],
+)
+def test_labeled_lists_without_facts_still_score_zero(line):
+    assert not _has_any(line, COMPETITION)
+
+
+def test_fictional_demo_credits_its_listed_competitors():
+    deal = curated_northstar_example(DEFAULT_SAMPLE_DEAL_NOTES)
+    row = next(i for i in deal.diligence_scorecard if "Competitive" in i.category)
+    assert row.score > 0
+
+
 def _pdf_text(pdf: bytes) -> bytes:
     """Decode ReportLab's ASCII85 + Flate content streams."""
     text = b""

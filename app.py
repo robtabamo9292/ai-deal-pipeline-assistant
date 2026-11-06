@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 from src.analysis_service import analyze_deal
 from src.intake import source_notes_for_analysis
-from src.demo import curated_northstar_example
+from src.demo import curated_northstar_example, curated_planted_claims_example
 from src.export import create_pipeline_dataframe
 from src.sample_data import REAL_SAMPLE_DEALS
 from src.ui.components import render_result
@@ -216,6 +216,27 @@ with tab_deal:
                 investment_focus=st.session_state.investment_focus,
             )
             demo_deal = curated_northstar_example(demo_notes)
+            st.session_state.latest_deal = demo_deal
+            st.session_state.analysis_complete = True
+            _remember_analyzed_deal(demo_deal, demo_notes)
+            st.rerun()
+
+        if st.button(
+            "Preview invented-claim check (no API key)",
+            width="stretch",
+            help=(
+                "Same fictional notes, but the extraction adds three claims the "
+                "notes never make. Watch them get flagged and earn no credit."
+            ),
+        ):
+            load_sample("Northstar Health - Fictional Workflow SaaS")
+            demo_notes = source_notes_for_analysis(
+                st.session_state.company_notes,
+                company_name=st.session_state.company_name,
+                source_type=st.session_state.source_type,
+                investment_focus=st.session_state.investment_focus,
+            )
+            demo_deal = curated_planted_claims_example(demo_notes)
             st.session_state.latest_deal = demo_deal
             st.session_state.analysis_complete = True
             _remember_analyzed_deal(demo_deal, demo_notes)

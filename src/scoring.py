@@ -50,6 +50,10 @@ _STOPWORDS = set(
 )
 
 
+# A leading label such as "Competition:" or "Go-to-market:".
+_HEADING = re.compile(r"^\s*[A-Za-z][\w /&-]{0,30}:\s*")
+
+
 def _in_vocabulary(word: str) -> bool:
     return word in _RUBRIC_VOCABULARY or word.rstrip("s") in _RUBRIC_VOCABULARY
 
@@ -63,7 +67,7 @@ def _is_fact_bearing(clause: str) -> bool:
     clauses that are mostly rubric keywords.
     """
     # Ignore a leading heading such as "Go-to-market:"; it is formatting.
-    body = re.sub(r"^\s*[A-Za-z][\w /&-]{0,30}:\s*", "", clause)
+    body = _HEADING.sub("", clause)
     tokens = [token.strip(".,'") for token in re.findall(r"[A-Za-z0-9$%][\w$%.,'-]*", body)]
     content = [token for token in tokens if token and token.lower() not in _STOPWORDS]
     if not content:
@@ -108,8 +112,9 @@ def _has_any(text: str, phrases: Iterable[str]) -> bool:
     """
     if not text:
         return False
+    # Whole-word match that also accepts plurals ("competitors", "partners").
     expression = re.compile(
-        r"(?<![\w])(?:" + "|".join(re.escape(p) for p in phrases) + r")(?![\w])",
+        r"(?<![\w])(?:" + "|".join(re.escape(p) for p in phrases) + r")(?:e?s)?(?![\w])",
         re.IGNORECASE,
     )
     missing = re.compile(
@@ -138,6 +143,12 @@ def _has_any(text: str, phrases: Iterable[str]) -> bool:
             if not _is_fact_bearing(clause):
                 continue
             if disclosure.search(clause) or re.search(r"[$%\d]", clause):
+                return True
+            # A labeled list ("Competition: Acme, EHR modules, outsourcing
+            # firms") states facts without a verb. The body has already passed
+            # the fact-bearing test, so keyword-only lists still score zero.
+            heading = _HEADING.match(clause)
+            if heading and len(re.findall(r"\b[\w-]+\b", clause[heading.end():])) >= 3:
                 return True
     return False
 
@@ -268,7 +279,13 @@ def calculate_confidence_score(deal: DealRecord, raw_notes: str, scorecard: List
     """Estimate extraction confidence from completeness, not factual truth."""
     key_fields = [deal.company_name, deal.sector, deal.subsector, deal.business_model, deal.stage, deal.description, deal.recommended_next_step]
     field_score = round(sum(_is_known(value) for value in key_fields) / len(key_fields) * 40)
-    signal_count = sum(len(_known_items(values)) for values in [deal.traction_signals, deal.customer_signals, deal.funding_signals, deal.risks, deal.diligence_questions])
+    # Signals the notes do not back count toward neither score.
+    checked = [
+        split_supported(_known_items(values), raw_notes)[0]
+        for values in (deal.traction_signals, deal.customer_signals, deal.risks)
+    ]
+    unchecked = [_known_items(deal.funding_signals), _known_items(deal.diligence_questions)]
+    signal_count = sum(len(values) for values in checked + unchecked)
     signal_score = min(30, signal_count * 3)
     notes_score = min(15, len(_clean_text(raw_notes)) // 200)
     evidence_score = round(sum(item.score / item.max_score for item in scorecard) / len(scorecard) * 15) if scorecard else 0
