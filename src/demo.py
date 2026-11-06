@@ -53,3 +53,34 @@ def curated_northstar_example(notes: str) -> DealRecord:
         prompt_version="not-run",
     )
     return apply_vc_scorecard(deal, notes)
+
+
+# Claims a model could plausibly invent: none of them appear in the notes.
+PLANTED_TRACTION = ["$1.2M ARR", "140% net revenue retention"]
+PLANTED_CUSTOMERS = ["Fortune 500 health systems"]
+PLANTED_QUOTE = "ARR reached $1.2M last quarter"
+
+
+def curated_planted_claims_example(notes: str) -> DealRecord:
+    """The curated Northstar extraction plus claims the notes do not support.
+
+    Demonstrates the source check without an API key: the planted claims are
+    flagged as unsupported, the invented quote is not found, and the score
+    matches the clean extraction because the planted claims earn nothing.
+    """
+    clean = curated_northstar_example(notes)
+    deal = clean.model_copy(deep=True)
+    deal.company_name = "Northstar Health (planted claims)"
+    deal.traction_signals = clean.traction_signals + PLANTED_TRACTION
+    deal.customer_signals = clean.customer_signals + PLANTED_CUSTOMERS
+    deal.evidence_excerpts = clean.evidence_excerpts + [
+        EvidenceExcerpt(category="Traction", claim="ARR of $1.2M", quote=PLANTED_QUOTE)
+    ]
+    deal.analysis_path = "curated_offline_demo_planted_claims"
+    deal.analysis_warning = (
+        "Fictional sample: the curated Northstar extraction with three planted "
+        "claims that are not in the notes ($1.2M ARR, 140% net revenue "
+        "retention, Fortune 500 health systems) and one invented quote. "
+        "No AI extraction was performed."
+    )
+    return apply_vc_scorecard(deal, notes)

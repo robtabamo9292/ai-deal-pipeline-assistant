@@ -117,6 +117,13 @@ def render_result(deal) -> None:
         return
     render_metrics(deal)
     render_provenance(deal)
+    if deal.unsupported_signals:
+        count = len(deal.unsupported_signals)
+        st.warning(
+            f"{count} extracted signal{'s' if count != 1 else ''} "
+            f"{'were' if count != 1 else 'was'} not found in the source notes "
+            "and earned no evidence credit. See **Source Excerpts** for the list."
+        )
 
     scorecard_tab, summary_tab, risks_tab, sources_tab, fields_tab, export_tab = st.tabs(
         [
