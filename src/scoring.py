@@ -50,6 +50,10 @@ _STOPWORDS = set(
 )
 
 
+# A leading label such as "Competition:" or "Go-to-market:".
+_HEADING = re.compile(r"^\s*[A-Za-z][\w /&-]{0,30}:\s*")
+
+
 def _in_vocabulary(word: str) -> bool:
     return word in _RUBRIC_VOCABULARY or word.rstrip("s") in _RUBRIC_VOCABULARY
 
@@ -63,7 +67,7 @@ def _is_fact_bearing(clause: str) -> bool:
     clauses that are mostly rubric keywords.
     """
     # Ignore a leading heading such as "Go-to-market:"; it is formatting.
-    body = re.sub(r"^\s*[A-Za-z][\w /&-]{0,30}:\s*", "", clause)
+    body = _HEADING.sub("", clause)
     tokens = [token.strip(".,'") for token in re.findall(r"[A-Za-z0-9$%][\w$%.,'-]*", body)]
     content = [token for token in tokens if token and token.lower() not in _STOPWORDS]
     if not content:
@@ -108,8 +112,9 @@ def _has_any(text: str, phrases: Iterable[str]) -> bool:
     """
     if not text:
         return False
+    # Whole-word match that also accepts plurals ("competitors", "partners").
     expression = re.compile(
-        r"(?<![\w])(?:" + "|".join(re.escape(p) for p in phrases) + r")(?![\w])",
+        r"(?<![\w])(?:" + "|".join(re.escape(p) for p in phrases) + r")(?:e?s)?(?![\w])",
         re.IGNORECASE,
     )
     missing = re.compile(
@@ -138,6 +143,12 @@ def _has_any(text: str, phrases: Iterable[str]) -> bool:
             if not _is_fact_bearing(clause):
                 continue
             if disclosure.search(clause) or re.search(r"[$%\d]", clause):
+                return True
+            # A labeled list ("Competition: Acme, EHR modules, outsourcing
+            # firms") states facts without a verb. The body has already passed
+            # the fact-bearing test, so keyword-only lists still score zero.
+            heading = _HEADING.match(clause)
+            if heading and len(re.findall(r"\b[\w-]+\b", clause[heading.end():])) >= 3:
                 return True
     return False
 
